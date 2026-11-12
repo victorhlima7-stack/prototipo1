@@ -1,0 +1,2116 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ETE Funcional Midori Auto Leather — Engenharia Hidráulica & Simulador CAD</title>
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Tailwind Custom Configuration -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            cad: {
+              bg: '#F8FAFC',
+              navy: '#0F172A',
+              emerald: '#059669',
+              hydraulic: '#0284C7',
+              amber: '#D97706',
+              danger: '#DC2626',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* Blueprint CAD Background Grid Utility */
+    .cad-grid-bg {
+      background-color: #F8FAFC;
+      background-image:
+        linear-gradient(to right, rgba(2, 132, 199, 0.08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(2, 132, 199, 0.08) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    .cad-grid-fine {
+      background-color: #FFFFFF;
+      background-image:
+        linear-gradient(to right, rgba(148, 163, 184, 0.22) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148, 163, 184, 0.22) 1px, transparent 1px),
+        linear-gradient(to right, rgba(2, 132, 199, 0.14) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(2, 132, 199, 0.14) 1px, transparent 1px);
+      background-size: 24px 24px, 24px 24px, 120px 120px, 120px 120px;
+    }
+
+    /* Animated Pipe Flow Dashes */
+    @keyframes flowDash {
+      to {
+        stroke-dashoffset: -24;
+      }
+    }
+    .pipe-flow-active {
+      stroke-dasharray: 6 6;
+      animation: flowDash 0.65s linear infinite;
+    }
+
+    /* Drop falling animation */
+    @keyframes dropFall {
+      0% { transform: translateY(0px); opacity: 1; }
+      85% { opacity: 1; }
+      100% { transform: translateY(34px); opacity: 0; }
+    }
+    .vitamin-drop-anim {
+      animation: dropFall 0.75s cubic-bezier(0.4, 0, 1, 1) infinite;
+    }
+
+    /* Custom Scrollbar for horizontal tab bar on small screens */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-[#F8FAFC] text-[#0F172A] font-sans antialiased selection:bg-[#0284C7] selection:text-white">
+
+  <!-- Toast Notification Banner (Replaces alert()) -->
+  <div id="toastBanner" class="fixed bottom-5 right-5 z-50 hidden transform transition-all duration-300 max-w-sm">
+    <div class="bg-[#0F172A] text-white px-4 py-3 rounded-xl shadow-xl border border-slate-700 flex items-center gap-3">
+      <span id="toastIcon" class="w-2.5 h-2.5 rounded-full bg-[#059669] shrink-0"></span>
+      <p id="toastMessage" class="text-sm font-medium"></p>
+    </div>
+  </div>
+
+  <!-- TOP TECHNICAL NAVIGATION BAR -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between py-3 gap-3">
+        <!-- Brand & Project Title -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-[#0F172A] flex items-center justify-center text-white shadow-sm border border-slate-700">
+              <!-- Hydraulic Valve / CAD Icon -->
+              <svg class="w-6 h-6 text-[#059669]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m0-18l-4 4m4-4l4 4M4 12h16M7 8v8m10-8v8" />
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-mono text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-sky-50 text-[#0284C7] border border-sky-200">
+                  PROJETO ETE • PENÁPOLIS/SP
+                </span>
+                <span class="hidden sm:inline-block font-mono text-[11px] font-semibold text-slate-500">
+                  LOTE: 15×20 cm
+                </span>
+              </div>
+              <h1 class="text-base sm:text-lg font-extrabold text-[#0F172A] tracking-tight leading-tight">
+                Midori Auto Leather — Maquete Funcional
+              </h1>
+            </div>
+          </div>
+
+          <!-- Quick Jump to Simulator CTA on Mobile -->
+          <button onclick="switchTab('simulador')" class="md:hidden px-3 py-1.5 rounded-lg bg-[#0284C7] text-white text-xs font-semibold shadow-sm">
+            Simulador 90s
+          </button>
+        </div>
+
+        <!-- Section Navigation Tabs -->
+        <nav aria-label="Navegação Técnica" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 md:pb-0">
+          <button data-tab="visao-geral" onclick="switchTab('visao-geral')" class="nav-tab active-tab px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-all bg-[#0F172A] text-white shadow-sm">
+            1. Visão Geral &amp; Indústria
+          </button>
+          <button data-tab="simulador" onclick="switchTab('simulador')" class="nav-tab px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-all text-slate-600 hover:bg-slate-100 hover:text-[#0F172A]">
+            2. Simulador Bancada (90s)
+          </button>
+          <button data-tab="planta-cad" onclick="switchTab('planta-cad')" class="nav-tab px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-all text-slate-600 hover:bg-slate-100 hover:text-[#0F172A]">
+            3. Planta Cotada &amp; CAD
+          </button>
+          <button data-tab="compras-montagem" onclick="switchTab('compras-montagem')" class="nav-tab px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-all text-slate-600 hover:bg-slate-100 hover:text-[#0F172A]">
+            4. Compras &amp; Montagem
+          </button>
+          <button data-tab="protocolo-pitch" onclick="switchTab('protocolo-pitch')" class="nav-tab px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-all text-slate-600 hover:bg-slate-100 hover:text-[#0F172A]">
+            5. Protocolo 4h &amp; Pitch
+          </button>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+    <!-- ===================================================================== -->
+    <!-- TAB 1: VISÃO GERAL & CONTEXTO INDUSTRIAL (MIDORI AUTO LEATHER)        -->
+    <!-- ===================================================================== -->
+    <section id="tab-visao-geral" class="tab-panel space-y-8">
+      <!-- Hero Technical Banner -->
+      <div class="cad-grid-bg rounded-2xl border border-slate-200 p-6 sm:p-8 lg:p-10 shadow-sm relative overflow-hidden">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+          <div class="max-w-2xl space-y-4">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-mono font-bold">
+              <span class="w-2 h-2 rounded-full bg-[#059669] animate-pulse"></span>
+              ENGENHARIA HIDRÁULICA &amp; SUSTENTABILIDADE INDUSTRIAL
+            </div>
+            <h2 class="text-2xl sm:text-4xl font-extrabold text-[#0F172A] tracking-tight leading-tight">
+              Módulo Funcional da ETE/ETA — <span class="text-[#0284C7]">Midori Auto Leather</span>
+            </h2>
+            <p class="text-slate-600 text-sm sm:text-base leading-relaxed">
+              Prototipagem em escala reduzida (<strong class="font-mono text-[#0F172A]">15 cm × 20 cm</strong>) do sistema de clarificação e neutralização de efluentes do beneficiamento de couro automotivo em <strong>Penápolis/SP</strong>. Opera em regime de <strong>batelada sob demanda</strong> combinando energia gravitacional, mistura rápida mecânica (<span class="font-mono">3V DC</span>) e oxirredução visual instantânea.
+            </p>
+            <div class="flex flex-wrap items-center gap-3 pt-2">
+              <button onclick="switchTab('simulador')" class="px-5 py-2.5 rounded-xl bg-[#0284C7] hover:bg-sky-700 text-white font-semibold text-sm shadow-sm transition-all flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Operar Simulador da Bancada
+              </button>
+              <button onclick="switchTab('planta-cad')" class="px-5 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-[#0F172A] border border-slate-300 font-semibold text-sm shadow-sm transition-all">
+                Ver Planta Baixa CAD (15×20 cm)
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI Technical Grid -->
+          <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:w-[440px] shrink-0">
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <p class="font-mono text-[11px] font-bold uppercase text-slate-400">Área Total Bancada</p>
+              <p class="font-mono text-xl sm:text-2xl font-extrabold text-[#0F172A] mt-1">15 × 20 cm</p>
+              <p class="text-xs text-slate-500 mt-1">20 cm frente × 15 cm prof.</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <p class="font-mono text-[11px] font-bold uppercase text-slate-400">Ciclo Batelada</p>
+              <p class="font-mono text-xl sm:text-2xl font-extrabold text-[#0284C7] mt-1">90 seg</p>
+              <p class="text-xs text-slate-500 mt-1">Consumo: 350 a 400 ml</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <p class="font-mono text-[11px] font-bold uppercase text-slate-400">Tanque Reator</p>
+              <p class="font-mono text-xl sm:text-2xl font-extrabold text-[#059669] mt-1">14×9×8 cm</p>
+              <p class="text-xs text-slate-500 mt-1">Acrílico cristal + Motor 3V</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <p class="font-mono text-[11px] font-bold uppercase text-slate-400">Dreno Sifão</p>
+              <p class="font-mono text-xl sm:text-2xl font-extrabold text-[#0F172A] mt-1">10–15 seg</p>
+              <p class="text-xs text-slate-500 mt-1">Queda 75 cm • Tubo 6–8 mm</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Industrial Context & Analogies: Midori Auto Leather (Penápolis/SP) -->
+      <div class="space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+          <div>
+            <span class="font-mono text-xs font-bold text-[#0284C7] uppercase tracking-wider">ANALOGIA DE ENGENHARIA</span>
+            <h3 class="text-xl sm:text-2xl font-bold text-[#0F172A]">Planta Real (Midori Auto Leather) vs. Módulo em Bancada</h3>
+          </div>
+          <span class="font-mono text-xs text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
+            Beneficiamento de Couro Automotivo • Penápolis/SP
+          </span>
+        </div>
+
+        <!-- 4 Architectural Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Card 1 -->
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="w-8 h-8 rounded-lg bg-sky-100 text-[#0284C7] font-mono font-bold text-sm flex items-center justify-center">01</span>
+                <span class="font-mono text-xs font-semibold text-slate-500">H = 18–25 cm</span>
+              </div>
+              <h4 class="font-bold text-[#0F172A] text-base">Reservatório Elevado (Equalização)</h4>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                <strong>Na Indústria:</strong> Tanques pulmão equalizam vazão e carga orgânica/corantes vindos dos fulões de tingimento do couro.
+              </p>
+              <p class="text-xs text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-100 leading-relaxed">
+                <strong>Na Maquete:</strong> Tanque elevado (<span class="font-mono">500 ml–1 L</span>) com água escura (<span class="font-mono">Tintura Iodo 2%</span>, 15–20 ml/5L). Desce por gravidade em mangueira <span class="font-mono">4 mm</span> (Registro 1) <strong>por cima da borda</strong>.
+              </p>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="w-8 h-8 rounded-lg bg-sky-100 text-[#0284C7] font-mono font-bold text-sm flex items-center justify-center">02</span>
+                <span class="font-mono text-xs font-semibold text-slate-500">14 × 9 × 8 cm</span>
+              </div>
+              <h4 class="font-bold text-[#0F172A] text-base">Reator e Agitador (Mistura Rápida)</h4>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                <strong>Na Indústria:</strong> Câmaras de mistura rápida promovem gradiente de velocidade para dispersão homogênea de reagentes químicos.
+              </p>
+              <p class="text-xs text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-100 leading-relaxed">
+                <strong>Na Maquete:</strong> Pote cristalino sem chicanas. Ponte seca sustenta motor <span class="font-mono">DC 3V</span> (<span class="font-mono">1,5V–3V</span> AA), eixo até <span class="font-mono">1,5 cm</span> do fundo e 2 pás (<span class="font-mono">1,5 × 1 cm</span>).
+              </p>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="w-8 h-8 rounded-lg bg-emerald-100 text-[#059669] font-mono font-bold text-sm flex items-center justify-center">03</span>
+                <span class="font-mono text-xs font-semibold text-slate-500">250 ml • H 25 cm</span>
+              </div>
+              <h4 class="font-bold text-[#0F172A] text-base">Dosador de Vitamina C (Gotejamento)</h4>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                <strong>Na Indústria:</strong> Bombas dosadoras injetam coagulantes, neutralizantes e oxidantes/redutores para remoção de cor e DQO.
+              </p>
+              <p class="text-xs text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-100 leading-relaxed">
+                <strong>Na Maquete:</strong> Frasco de soro <span class="font-mono">250 ml</span> (<span class="font-mono">Ø 6 cm</span>) em haste de <span class="font-mono">25 cm</span> com Ácido Ascórbico (<span class="font-mono">3g/500ml</span>) e equipo com pinça rolete pingando por cima da borda.
+              </p>
+            </div>
+          </div>
+
+          <!-- Card 4 -->
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="w-8 h-8 rounded-lg bg-emerald-100 text-[#059669] font-mono font-bold text-sm flex items-center justify-center">04</span>
+                <span class="font-mono text-xs font-semibold text-slate-500">Ø 6–8 mm • ↓ 75 cm</span>
+              </div>
+              <h4 class="font-bold text-[#0F172A] text-base">Dreno de Fundo (Descarga Sifão)</h4>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                <strong>Na Indústria:</strong> Descarga de fundo e envio do efluente clarificado para polimento final ou reuso industrial controlado.
+              </p>
+              <p class="text-xs text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-100 leading-relaxed">
+                <strong>Na Maquete:</strong> 1 único furo rente ao fundo, mangueira <span class="font-mono">6–8 mm</span> vedada com silicone acético, Registro 2 e queda reta de <span class="font-mono">75 cm</span> até galão oculto de <span class="font-mono">5L</span> (<span class="font-mono">10–15s</span>).
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual Redox Chemistry Card -->
+      <div class="bg-[#0F172A] text-white rounded-2xl p-6 sm:p-8 shadow-md border border-slate-800">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          <div class="lg:col-span-5 space-y-3">
+            <span class="inline-block font-mono text-xs font-bold px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              QUÍMICA VISUAL APLICADA (REDOX)
+            </span>
+            <h3 class="text-xl sm:text-2xl font-bold">Descoloração Instantânea por Oxirredução</h3>
+            <p class="text-slate-300 text-sm leading-relaxed">
+              Para demonstrar em <strong>90 segundos</strong> o poder de clarificação da ETE sem gerar lodo tóxico na bancada, utilizamos o Iodo molecular (<span class="font-mono text-amber-400">I₂</span>) simulando os corantes escuros do couro, reduzido pelo Ácido Ascórbico (<span class="font-mono text-sky-300">C₆H₈O₆</span>) a íons iodeto (<span class="font-mono text-emerald-300">I⁻</span>) 100% incolores.
+            </p>
+          </div>
+
+          <div class="lg:col-span-7 bg-slate-900/90 rounded-xl p-5 border border-slate-700 space-y-4">
+            <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-center font-mono">
+              <div class="px-3.5 py-2.5 rounded-lg bg-amber-950/80 border border-amber-700/60">
+                <div class="text-base sm:text-lg font-bold text-amber-400">I₂ (aq)</div>
+                <div class="text-[11px] text-amber-200/80">Marrom Escuro</div>
+              </div>
+              <span class="text-slate-400 font-bold text-lg">+</span>
+              <div class="px-3.5 py-2.5 rounded-lg bg-sky-950/80 border border-sky-700/60">
+                <div class="text-base sm:text-lg font-bold text-sky-300">C₆H₈O₆</div>
+                <div class="text-[11px] text-sky-200/80">Vitamina C (Incolor)</div>
+              </div>
+              <span class="text-emerald-400 font-bold text-xl">→</span>
+              <div class="px-3.5 py-2.5 rounded-lg bg-emerald-950/80 border border-emerald-600/60">
+                <div class="text-base sm:text-lg font-bold text-emerald-300">2 I⁻ + C₆H₆O₆ + 2 H⁺</div>
+                <div class="text-[11px] text-emerald-200/80">100% Cristalino</div>
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800 text-center text-xs">
+              <div>
+                <span class="text-slate-400 block">Solução Efluente</span>
+                <span class="font-mono font-semibold text-amber-300">15–20 ml Iodo 2% / 5L</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block">Solução Dosadora</span>
+                <span class="font-mono font-semibold text-sky-300">3g Vit. C / 500 ml</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block">Cinética de Mistura</span>
+                <span class="font-mono font-semibold text-emerald-300">Agitação 1,5V–3V DC</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 2: SIMULADOR INTERATIVO DA BANCADA (90s + SVG ANIMADO)            -->
+    <!-- ===================================================================== -->
+    <section id="tab-simulador" class="tab-panel hidden space-y-6">
+      <!-- Top Control Bar -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-mono text-xs font-bold uppercase text-[#0284C7]">BANCADA VIRTUAL EM CORTE LATERAL</span>
+            <span id="simModeBadge" class="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">MODO MANUAL</span>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-extrabold text-[#0F172A]">Simulador Interativo do Ciclo em Batelada (90s)</h2>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+          <!-- Speed Toggle -->
+          <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
+            <button id="speed1xBtn" onclick="setSimSpeed(1)" class="px-2.5 py-1 rounded-lg font-mono text-xs font-bold bg-white text-[#0F172A] shadow-sm transition">
+              1x (90s Real)
+            </button>
+            <button id="speed3xBtn" onclick="setSimSpeed(3)" class="px-2.5 py-1 rounded-lg font-mono text-xs font-bold text-slate-600 hover:text-[#0F172A] transition">
+              3x (30s Rápido)
+            </button>
+          </div>
+
+          <!-- Auto 90s Cycle Button -->
+          <button id="btnAutoCycle" onclick="toggleAutoCycle()" class="px-4 py-2.5 rounded-xl bg-[#059669] hover:bg-emerald-700 text-white font-semibold text-sm shadow-sm transition flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span id="btnAutoCycleText">Rodar Ciclo Automático (90s)</span>
+          </button>
+
+          <!-- Reset Button -->
+          <button onclick="resetSimulator()" class="px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-semibold text-sm transition">
+            Resetar Bancada
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Simulator Grid: Interactive SVG Diagram + Telemetry & Manual Controls -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- LEFT 7 COLS: ANIMATED TECHNICAL SVG DIAGRAM -->
+        <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+            <span class="font-mono text-xs font-bold text-slate-500">CORTE ESQUEMÁTICO • ESCALA PROPORCIONAL</span>
+            <button onclick="refillUpperTank()" class="font-mono text-xs font-semibold text-[#0284C7] hover:underline">
+              + Reabastecer Tanque Superior (1L)
+            </button>
+          </div>
+
+          <div class="w-full overflow-hidden rounded-xl border border-slate-200 cad-grid-fine">
+            <svg id="eteSvg" viewBox="0 0 700 540" class="w-full h-auto block select-none">
+              <defs>
+                <!-- Clip paths for liquids inside tanks -->
+                <clipPath id="clipUpperTank">
+                  <rect x="46" y="42" width="138" height="96" rx="4" />
+                </clipPath>
+                <clipPath id="clipSerumBottle">
+                  <rect x="524" y="42" width="52" height="92" rx="10" />
+                </clipPath>
+                <clipPath id="clipReactor">
+                  <rect x="212" y="218" width="236" height="130" rx="3" />
+                </clipPath>
+                <clipPath id="clipCollector">
+                  <rect x="472" y="418" width="146" height="98" rx="8" />
+                </clipPath>
+              </defs>
+
+              <!-- ================= BENCHTOP TABLE SURFACE (Y = 355) ================= -->
+              <rect x="15" y="355" width="670" height="14" rx="3" fill="#334155" />
+              <rect x="30" y="369" width="14" height="160" fill="#475569" />
+              <rect x="656" y="369" width="14" height="160" fill="#475569" />
+              <text x="32" y="385" font-family="JetBrains Mono, monospace" font-size="10" font-weight="700" fill="#64748B">
+                BANCADA DE EXPOSIÇÃO (LOTE: 20 cm × 15 cm)
+              </text>
+
+              <!-- ================= 1. ELEVATED RAW EFFLUENT TANK (18-25 cm) ================= -->
+              <!-- Support Columns -->
+              <rect x="58" y="140" width="10" height="215" fill="#64748B" />
+              <rect x="162" y="140" width="10" height="215" fill="#64748B" />
+              <rect x="45" y="347" width="140" height="8" fill="#475569" />
+              <!-- Elevation Dimension Line (18-25 cm) -->
+              <line x1="26" y1="140" x2="26" y2="355" stroke="#0284C7" stroke-width="1.5" />
+              <line x1="21" y1="140" x2="31" y2="140" stroke="#0284C7" stroke-width="1.5" />
+              <line x1="21" y1="355" x2="31" y2="355" stroke="#0284C7" stroke-width="1.5" />
+              <text x="19" y="255" transform="rotate(-90 19 255)" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#0284C7" text-anchor="middle">
+                H = 18–25 cm
+              </text>
+
+              <!-- Tank Body -->
+              <rect x="44" y="40" width="142" height="100" rx="6" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.5" />
+              <!-- Dark Iodine Liquid inside Upper Tank -->
+              <g clip-path="url(#clipUpperTank)">
+                <rect id="svgUpperLiquid" x="46" y="54" width="138" height="84" fill="#451A03" />
+              </g>
+              <text x="115" y="28" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#0F172A" text-anchor="middle">
+                1. RESERVATÓRIO (I₂ 2%)
+              </text>
+              <text id="svgUpperVolText" x="115" y="102" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#FEF3C7" text-anchor="middle">
+                1000 ml
+              </text>
+
+              <!-- 4mm Silicone Hose from base OVER THE RIM (Zero inlet holes!) -->
+              <path d="M 115 140 L 115 178 L 228 178 L 228 214" fill="none" stroke="#94A3B8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+              <path id="svgPipe1Flow" d="M 115 140 L 115 178 L 228 178 L 228 214" fill="none" stroke="#78350F" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" opacity="0" />
+              <!-- Inlet Stream into Reactor -->
+              <line id="svgInletStream" x1="228" y1="214" x2="228" y2="345" stroke="#78350F" stroke-width="3.5" stroke-dasharray="5 3" opacity="0" />
+
+              <!-- Registro 1 (Valve 1) -->
+              <g id="svgValve1Group" class="cursor-pointer" onclick="toggleControl('valve1')">
+                <rect x="148" y="164" width="44" height="28" rx="6" fill="#FFFFFF" stroke="#0284C7" stroke-width="2" />
+                <circle id="svgValve1Dot" cx="170" cy="178" r="7" fill="#DC2626" />
+                <text x="170" y="157" font-family="JetBrains Mono, monospace" font-size="10" font-weight="700" fill="#0284C7" text-anchor="middle">
+                  REG. 1 (4mm)
+                </text>
+              </g>
+              <text x="234" y="198" font-family="JetBrains Mono, monospace" font-size="9.5" font-weight="700" fill="#059669">
+                Por cima da borda
+              </text>
+
+              <!-- ================= 3. VITAMIN C SERUM DOSER (25 cm stand) ================= -->
+              <!-- Vertical Stand Pole (25 cm) -->
+              <rect x="615" y="25" width="8" height="330" rx="2" fill="#475569" />
+              <rect x="595" y="347" width="46" height="8" fill="#334155" />
+              <line x1="615" y1="32" x2="550" y2="32" stroke="#475569" stroke-width="4" />
+              <!-- Stand Height Dimension -->
+              <line x1="642" y1="25" x2="642" y2="355" stroke="#0284C7" stroke-width="1.5" />
+              <line x1="637" y1="25" x2="647" y2="25" stroke="#0284C7" stroke-width="1.5" />
+              <line x1="637" y1="355" x2="647" y2="355" stroke="#0284C7" stroke-width="1.5" />
+              <text x="655" y="195" transform="rotate(-90 655 195)" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#0284C7" text-anchor="middle">
+                HASTE = 25 cm
+              </text>
+
+              <!-- 250 ml Serum Bottle (Ø 6 cm) -->
+              <rect x="522" y="40" width="56" height="96" rx="12" fill="#FFFFFF" stroke="#0F172A" stroke-width="2" />
+              <g clip-path="url(#clipSerumBottle)">
+                <rect x="524" y="55" width="52" height="79" fill="#E0F2FE" />
+              </g>
+              <text x="550" y="22" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#059669" text-anchor="middle">
+                3. SORO VIT. C (250ml)
+              </text>
+              <text x="550" y="92" font-family="JetBrains Mono, monospace" font-size="10" font-weight="700" fill="#0284C7" text-anchor="middle">
+                C₆H₈O₆
+              </text>
+
+              <!-- Hospital Drip Line (Equipo) over Reactor Rim -->
+              <path d="M 550 136 L 550 176 L 426 176 L 426 212" fill="none" stroke="#94A3B8" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+              <path id="svgDripPipeFlow" d="M 550 136 L 550 176 L 426 176 L 426 212" fill="none" stroke="#0284C7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0" />
+
+              <!-- Roller Clamp (Pinça Rolete) -->
+              <g class="cursor-pointer" onclick="toggleControl('drip')">
+                <rect x="466" y="163" width="48" height="26" rx="6" fill="#FFFFFF" stroke="#059669" stroke-width="2" />
+                <circle id="svgDripDot" cx="490" cy="176" r="6.5" fill="#DC2626" />
+                <text x="490" y="156" font-family="JetBrains Mono, monospace" font-size="10" font-weight="700" fill="#059669" text-anchor="middle">
+                  PINÇA ROLETE
+                </text>
+              </g>
+
+              <!-- Falling Vitamin C Drops -->
+              <g id="svgVitaminDrops" opacity="0">
+                <circle cx="426" cy="218" r="3.5" fill="#0284C7" class="vitamin-drop-anim" />
+                <circle cx="426" cy="218" r="3.5" fill="#38BDF8" class="vitamin-drop-anim" style="animation-delay: 0.37s;" />
+              </g>
+
+              <!-- ================= 2. TRANSPARENT REACTOR TANK (14 x 9 x 8 cm) ================= -->
+              <!-- Dry Top Bridge -->
+              <rect x="196" y="196" width="268" height="10" rx="2" fill="#475569" />
+              <!-- 3V DC Motor Housing (Dry above water) -->
+              <rect x="304" y="158" width="52" height="38" rx="5" fill="#0F172A" stroke="#334155" stroke-width="2" />
+              <text x="330" y="175" font-family="JetBrains Mono, monospace" font-size="10" font-weight="700" fill="#38BDF8" text-anchor="middle">
+                MOTOR
+              </text>
+              <text x="330" y="188" font-family="JetBrains Mono, monospace" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">
+                3V DC
+              </text>
+
+              <!-- Reactor Acrylic Tank Walls (14 x 9 x 8 cm) -->
+              <rect x="210" y="216" width="240" height="134" rx="4" fill="#FFFFFF" fill-opacity="0.7" stroke="#0F172A" stroke-width="3" />
+
+              <!-- Dynamic Reactor Liquid -->
+              <g clip-path="url(#clipReactor)">
+                <rect id="svgReactorLiquid" x="212" y="348" width="236" height="0" fill="#451A03" />
+                <!-- Gentle Agitation Vortex Wave Overlay -->
+                <path id="svgVortexWave" d="M 212 252 Q 270 245 330 255 T 448 250 L 448 348 L 212 348 Z" fill="#FFFFFF" fill-opacity="0.16" opacity="0" />
+              </g>
+
+              <!-- Agitator Shaft (stops 1.5 cm above bottom!) -->
+              <line x1="330" y1="196" x2="330" y2="322" stroke="#0F172A" stroke-width="4" stroke-linecap="round" />
+              <!-- Two Plastic Blades (1.5 cm x 1 cm) -->
+              <g id="svgImpellerGroup">
+                <rect id="svgBladeLeft" x="304" y="314" width="24" height="13" rx="2" fill="#0284C7" stroke="#0F172A" stroke-width="1.2" />
+                <rect id="svgBladeRight" x="332" y="314" width="24" height="13" rx="2" fill="#0284C7" stroke="#0F172A" stroke-width="1.2" />
+              </g>
+              <!-- 1.5 cm bottom clearance indicator -->
+              <line x1="364" y1="327" x2="364" y2="348" stroke="#0284C7" stroke-width="1.2" />
+              <text x="370" y="341" font-family="JetBrains Mono, monospace" font-size="9.5" font-weight="700" fill="#0284C7">
+                1,5 cm fundo
+              </text>
+
+              <!-- Reactor Dimension Callout -->
+              <text x="330" y="210" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#0F172A" text-anchor="middle">
+                2. TANQUE REATOR: 14 × 9 × 8 cm
+              </text>
+
+              <!-- ================= 4. BOTTOM GRAVITY DRAIN (75 cm drop to 5L Gallon) ================= -->
+              <!-- Single Bottom Flush Hole + Silicone Sealing Collar -->
+              <rect x="446" y="336" width="12" height="12" rx="2" fill="#059669" />
+              <!-- 6-8 mm Crystal Drain Hose dropping straight 75 cm -->
+              <path d="M 458 342 L 495 342 L 495 426" fill="none" stroke="#94A3B8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+              <path id="svgDrainFlow" d="M 458 342 L 495 342 L 495 426" fill="none" stroke="#0284C7" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="0" />
+
+              <!-- Registro 2 (Quick Drain Valve) -->
+              <g class="cursor-pointer" onclick="toggleControl('valve2')">
+                <rect x="468" y="378" width="54" height="26" rx="6" fill="#FFFFFF" stroke="#0284C7" stroke-width="2" />
+                <circle id="svgValve2Dot" cx="495" cy="391" r="6.5" fill="#DC2626" />
+                <text x="415" y="395" font-family="JetBrains Mono, monospace" font-size="10" font-weight="700" fill="#0284C7" text-anchor="end">
+                  REG. 2 (6–8mm)
+                </text>
+              </g>
+
+              <!-- 75 cm Drop Dimension Callout -->
+              <line x1="392" y1="350" x2="392" y2="516" stroke="#0284C7" stroke-width="1.5" stroke-dasharray="3 2" />
+              <text x="384" y="452" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#0284C7" text-anchor="end">
+                QUEDA SIFÃO: ~75 cm
+              </text>
+
+              <!-- Hidden 5L Collector Gallon under table -->
+              <rect x="470" y="416" width="150" height="102" rx="10" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.5" />
+              <g clip-path="url(#clipCollector)">
+                <rect id="svgCollectorLiquid" x="472" y="492" width="146" height="24" fill="#BAE6FD" />
+              </g>
+              <text x="545" y="454" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#0F172A" text-anchor="middle">
+                4. GALÃO COLETOR (5L)
+              </text>
+              <text id="svgCollectorVolText" x="545" y="472" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#0284C7" text-anchor="middle">
+                Tratado: 0 ml
+              </text>
+            </svg>
+          </div>
+
+          <!-- Interactive Controls Strip Below SVG -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+            <!-- Control 1: Registro 1 -->
+            <button id="ctrlValve1" onclick="toggleControl('valve1')" class="p-3 rounded-xl border-2 border-slate-200 bg-slate-50 hover:border-[#0284C7] text-left transition-all">
+              <div class="flex items-center justify-between">
+                <span class="font-mono text-[11px] font-bold text-slate-500">VÁLVULA 01</span>
+                <span id="badgeValve1" class="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700">FECHADO</span>
+              </div>
+              <p class="font-bold text-xs sm:text-sm text-[#0F172A] mt-1">Registro 1 (4mm)</p>
+              <p class="text-[11px] text-slate-500">Efluente Bruto (I₂)</p>
+            </button>
+
+            <!-- Control 2: Motor 3V -->
+            <button id="ctrlMotor" onclick="toggleControl('motor')" class="p-3 rounded-xl border-2 border-slate-200 bg-slate-50 hover:border-[#0284C7] text-left transition-all">
+              <div class="flex items-center justify-between">
+                <span class="font-mono text-[11px] font-bold text-slate-500">AGITAÇÃO</span>
+                <span id="badgeMotor" class="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">DESLIGADO</span>
+              </div>
+              <p class="font-bold text-xs sm:text-sm text-[#0F172A] mt-1">Motor DC (3V)</p>
+              <p class="text-[11px] text-slate-500">Pás 1,5 × 1 cm</p>
+            </button>
+
+            <!-- Control 3: Pinça Rolete -->
+            <button id="ctrlDrip" onclick="toggleControl('drip')" class="p-3 rounded-xl border-2 border-slate-200 bg-slate-50 hover:border-[#059669] text-left transition-all">
+              <div class="flex items-center justify-between">
+                <span class="font-mono text-[11px] font-bold text-slate-500">DOSAGEM</span>
+                <span id="badgeDrip" class="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700">FECHADA</span>
+              </div>
+              <p class="font-bold text-xs sm:text-sm text-[#0F172A] mt-1">Pinça Rolete</p>
+              <p class="text-[11px] text-slate-500">Vitamina C (250ml)</p>
+            </button>
+
+            <!-- Control 4: Registro 2 -->
+            <button id="ctrlValve2" onclick="toggleControl('valve2')" class="p-3 rounded-xl border-2 border-slate-200 bg-slate-50 hover:border-[#0284C7] text-left transition-all">
+              <div class="flex items-center justify-between">
+                <span class="font-mono text-[11px] font-bold text-slate-500">DRENO SIFÃO</span>
+                <span id="badgeValve2" class="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700">FECHADO</span>
+              </div>
+              <p class="font-bold text-xs sm:text-sm text-[#0F172A] mt-1">Registro 2 (6–8mm)</p>
+              <p class="text-[11px] text-slate-500">Queda 75 cm → 5L</p>
+            </button>
+          </div>
+        </div>
+
+        <!-- RIGHT 5 COLS: LIVE TELEMETRY & CHEMICAL STATE PANEL -->
+        <div class="lg:col-span-5 space-y-4">
+          <!-- Telemetry Dashboard Card -->
+          <div class="bg-[#0F172A] text-white rounded-2xl p-6 shadow-md border border-slate-800 space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <span class="font-mono text-[11px] font-bold text-[#38BDF8] uppercase tracking-wider">TELEMETRIA EM TEMPO REAL</span>
+                <h3 class="text-lg font-bold">Monitoramento do Reator</h3>
+              </div>
+              <div class="text-right">
+                <span class="font-mono text-[11px] text-slate-400 block">CRONÔMETRO</span>
+                <span id="teleTimer" class="font-mono text-2xl font-extrabold text-[#059669]">00.0s</span>
+                <span class="font-mono text-xs text-slate-400">/ 90s</span>
+              </div>
+            </div>
+
+            <!-- 2 Main Gauges -->
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                <span class="font-mono text-[11px] text-slate-400 block">VOLUME NO REATOR</span>
+                <div class="flex items-baseline gap-1 mt-1">
+                  <span id="teleVolume" class="font-mono text-3xl font-extrabold text-white">0</span>
+                  <span class="font-mono text-sm text-slate-400">ml</span>
+                </div>
+                <div class="w-full h-2 bg-slate-800 rounded-full mt-2.5 overflow-hidden">
+                  <div id="barVolume" class="h-full bg-[#0284C7] transition-all duration-150" style="width: 0%"></div>
+                </div>
+                <span class="font-mono text-[10px] text-slate-400 mt-1 block">Alvo batelada: 350–400 ml</span>
+              </div>
+
+              <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                <span class="font-mono text-[11px] text-slate-400 block">IODO LIVRE (I₂)</span>
+                <div class="flex items-baseline gap-1 mt-1">
+                  <span id="teleIodine" class="font-mono text-3xl font-extrabold text-amber-400">0</span>
+                  <span class="font-mono text-sm text-slate-400">%</span>
+                </div>
+                <div class="w-full h-2 bg-slate-800 rounded-full mt-2.5 overflow-hidden">
+                  <div id="barIodine" class="h-full bg-amber-500 transition-all duration-150" style="width: 0%"></div>
+                </div>
+                <span id="teleClarityLabel" class="font-mono text-[10px] text-slate-400 mt-1 block">Tanque vazio</span>
+              </div>
+            </div>
+
+            <!-- Chemical Reaction Status Box -->
+            <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-mono text-xs font-bold text-slate-300">ESTADO DA REAÇÃO REDOX</span>
+                <span id="telePhaseBadge" class="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                  AGUARDANDO INÍCIO
+                </span>
+              </div>
+              <p id="teleStatusDesc" class="text-xs text-slate-300 leading-relaxed">
+                Abra o <strong>Registro 1 (4mm)</strong> ou clique em <strong>Rodar Ciclo Automático (90s)</strong> para iniciar o enchimento por gravidade do efluente escuro.
+              </p>
+              <div class="pt-2 border-t border-slate-800 font-mono text-xs text-center">
+                <span id="eqReactants" class="text-amber-400 font-bold">I₂ (marrom) + C₆H₈O₆</span>
+                <span class="text-slate-500 mx-1">→</span>
+                <span id="eqProducts" class="text-slate-400 font-bold">2 I⁻ (incolor) + C₆H₆O₆ + 2 H⁺</span>
+              </div>
+            </div>
+
+            <!-- Hydraulic Warning Box (Dynamic) -->
+            <div id="simHydraulicAlert" class="hidden bg-red-950/80 border border-red-700 p-3.5 rounded-xl text-xs text-red-200 flex items-start gap-2.5">
+              <span class="font-mono font-bold text-red-400">⚠ ALERTA:</span>
+              <span id="simHydraulicAlertText">Registro 1 e Registro 2 abertos simultaneamente! O efluente está passando direto para o dreno sem retenção no reator.</span>
+            </div>
+          </div>
+
+          <!-- Operator Quick Guide Card -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+            <h4 class="font-bold text-sm text-[#0F172A] flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-[#0284C7]"></span>
+              Sequência Manual Recomendada (4 Passos)
+            </h4>
+            <ol class="space-y-2 text-xs text-slate-600 list-decimal list-inside">
+              <li>Abra <strong>Registro 1</strong> até atingir <strong>~380 ml</strong> de efluente marrom, depois feche-o.</li>
+              <li>Ligue o <strong>Motor DC (3V)</strong> para criar vórtice suave sem respingos.</li>
+              <li>Abra a <strong>Pinça Rolete (Vitamina C)</strong> e observe o I₂ reduzir a iodeto cristalino em segundos; feche a pinça e desligue o motor.</li>
+              <li>Abra o <strong>Registro 2 (6–8 mm)</strong> para drenar tudo em <strong>10–15s</strong> pelo sifão de 75 cm.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 3: PLANTA BAIXA COTADA & CORTE TÉCNICO INTERATIVO (MODO CAD)      -->
+    <!-- ===================================================================== -->
+    <section id="tab-planta-cad" class="tab-panel hidden space-y-6">
+      <!-- CAD Header & View Switcher -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <span class="font-mono text-xs font-bold text-[#0284C7] uppercase tracking-wider">DESENHO TÉCNICO COTADO • MALHA 1 QUADRADO = 1,0 CM</span>
+          <h2 class="text-xl sm:text-2xl font-extrabold text-[#0F172A]">Planta Baixa (20 × 15 cm) &amp; Corte Hidráulico</h2>
+        </div>
+
+        <div class="inline-flex rounded-xl bg-slate-100 p-1.5 border border-slate-200 self-start md:self-auto">
+          <button id="btnCadTop" onclick="switchCadView('top')" class="px-4 py-2 rounded-lg font-mono text-xs sm:text-sm font-bold bg-[#0F172A] text-white shadow-sm transition">
+            Vista Superior (20 × 15 cm)
+          </button>
+          <button id="btnCadSide" onclick="switchCadView('side')" class="px-4 py-2 rounded-lg font-mono text-xs sm:text-sm font-bold text-slate-600 hover:text-[#0F172A] transition">
+            Vista Lateral (H 25 + Queda 75 cm)
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <!-- LEFT 8 COLS: INTERACTIVE CAD CANVAS WITH 1CM GRID -->
+        <div class="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <span id="cadDrawingLabel" class="font-mono text-xs font-bold text-[#0284C7]">
+              PRANCHA 01: PLANTA BAIXA COTADA — ESCALA 1:1 VIRTUAL (1 QUAD = 1 CM)
+            </span>
+            <span class="font-mono text-[11px] text-slate-500">Clique nos pontos [1] a [4] para detalhar</span>
+          </div>
+
+          <!-- VIEW 1: TOP-DOWN PLAN (20 cm x 15 cm exact 1cm grid: 1 grid unit = 28px -> 20cm = 560px, 15cm = 420px) -->
+          <div id="cadTopContainer" class="w-full overflow-x-auto rounded-xl border border-slate-300 bg-[#F8FAFC] p-2">
+            <svg viewBox="0 0 680 530" class="w-full min-w-[540px] h-auto block select-none">
+              <defs>
+                <!-- Exact 1 cm = 28px CAD Grid inside the 20x15cm lot -->
+                <pattern id="grid1cm" width="28" height="28" patternUnits="userSpaceOnUse">
+                  <path d="M 28 0 L 0 0 0 28" fill="none" stroke="#CBD5E1" stroke-width="0.9" />
+                </pattern>
+              </defs>
+
+              <!-- Outer Sheet Border -->
+              <rect x="10" y="10" width="660" height="510" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1" />
+
+              <!-- TOP DIMENSION LINE: 20.0 cm FRONTAL WIDTH (from X=60 to X=620 -> 560px = 20 * 28px) -->
+              <line x1="60" y1="36" x2="620" y2="36" stroke="#0284C7" stroke-width="1.8" />
+              <line x1="60" y1="28" x2="60" y2="54" stroke="#0284C7" stroke-width="1.5" />
+              <line x1="620" y1="28" x2="620" y2="54" stroke="#0284C7" stroke-width="1.5" />
+              <rect x="255" y="24" width="170" height="22" fill="#FFFFFF" />
+              <text x="340" y="39" font-family="JetBrains Mono, monospace" font-size="13" font-weight="700" fill="#0284C7" text-anchor="middle">
+                20,0 cm (LARGURA)
+              </text>
+
+              <!-- LEFT DIMENSION LINE: 15.0 cm DEPTH (from Y=60 to Y=480 -> 420px = 15 * 28px) -->
+              <line x1="36" y1="60" x2="36" y2="480" stroke="#0284C7" stroke-width="1.8" />
+              <line x1="28" y1="60" x2="54" y2="60" stroke="#0284C7" stroke-width="1.5" />
+              <line x1="28" y1="480" x2="54" y2="480" stroke="#0284C7" stroke-width="1.5" />
+              <text x="24" y="270" transform="rotate(-90 24 270)" font-family="JetBrains Mono, monospace" font-size="13" font-weight="700" fill="#0284C7" text-anchor="middle">
+                15,0 cm (PROFUNDIDADE)
+              </text>
+
+              <!-- EXACT 20 cm x 15 cm BASE LOT (X: 60..620, Y: 60..480) -->
+              <rect x="60" y="60" width="560" height="420" fill="url(#grid1cm)" stroke="#0F172A" stroke-width="3" />
+
+              <!-- COMPONENT 1: ELEVATED RAW TANK (Back-Left: 10cm x 5cm -> 280px x 140px at X=74, Y=74) -->
+              <rect x="74" y="74" width="280" height="140" rx="6" fill="#FEF3C7" fill-opacity="0.85" stroke="#0F172A" stroke-width="2" />
+              <text x="214" y="132" font-family="JetBrains Mono, monospace" font-size="12" font-weight="700" fill="#0F172A" text-anchor="middle">
+                RESERVATÓRIO ELEVADO
+              </text>
+              <text x="214" y="150" font-family="JetBrains Mono, monospace" font-size="11" fill="#78350F" text-anchor="middle">
+                Cota Z: +18 a +25 cm (500ml–1L)
+              </text>
+              <text x="214" y="168" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#0284C7" text-anchor="middle">
+                Mangueira 4 mm + Reg. 1
+              </text>
+
+              <!-- Hose 4mm route over reactor rim -->
+              <path d="M 214 214 L 214 242" fill="none" stroke="#0284C7" stroke-width="4" stroke-dasharray="5 3" />
+              <polygon points="214,248 209,239 219,239" fill="#0284C7" />
+
+              <!-- COMPONENT 3: VITAMIN C SERUM STAND (Back-Right: Ø 6cm = 168px circle centered at X=515, Y=144) -->
+              <circle cx="515" cy="144" r="84" fill="#ECFDF5" fill-opacity="0.9" stroke="#059669" stroke-width="2" stroke-dasharray="6 3" />
+              <circle cx="585" cy="95" r="10" fill="#475569" />
+              <text x="515" y="138" font-family="JetBrains Mono, monospace" font-size="12" font-weight="700" fill="#059669" text-anchor="middle">
+                FRASCO SORO 250ml
+              </text>
+              <text x="515" y="156" font-family="JetBrains Mono, monospace" font-size="11" fill="#0F172A" text-anchor="middle">
+                Ø 6 cm • Haste 25 cm
+              </text>
+              <!-- Equipo Drip route over reactor rim -->
+              <path d="M 465 212 L 435 242" fill="none" stroke="#059669" stroke-width="3.5" stroke-dasharray="5 3" />
+              <polygon points="430,247 433,237 440,244" fill="#059669" />
+
+              <!-- COMPONENT 2: REACTOR TANK 14 cm x 9 cm (14*28=392px wide, 9*28=252px deep, at X=74, Y=214 -> Y=466) -->
+              <!-- Let's position Reactor at X=74, Y=222, W=392 (14cm), H=244 (~8.7cm visual fit with 14x9 label) -->
+              <rect x="74" y="222" width="392" height="244" rx="4" fill="#E0F2FE" fill-opacity="0.65" stroke="#0F172A" stroke-width="2.5" />
+              <!-- Internal Dimension 14.0 cm -->
+              <line x1="74" y1="452" x2="466" y2="452" stroke="#0284C7" stroke-width="1.5" />
+              <text x="270" y="447" font-family="JetBrains Mono, monospace" font-size="11.5" font-weight="700" fill="#0284C7" text-anchor="middle">
+                14,0 cm (COMPRIMENTO REATOR)
+              </text>
+              <!-- Internal Dimension 9.0 cm -->
+              <line x1="90" y1="222" x2="90" y2="466" stroke="#0284C7" stroke-width="1.5" />
+              <text x="103" y="344" transform="rotate(-90 103 344)" font-family="JetBrains Mono, monospace" font-size="11.5" font-weight="700" fill="#0284C7" text-anchor="middle">
+                9,0 cm (LARGURA)
+              </text>
+
+              <!-- Dry Bridge & 3V Motor centered over Reactor -->
+              <rect x="66" y="324" width="408" height="32" rx="3" fill="#334155" fill-opacity="0.9" />
+              <circle cx="270" cy="340" r="22" fill="#0F172A" stroke="#38BDF8" stroke-width="2" />
+              <text x="270" y="344" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#FFFFFF" text-anchor="middle">
+                3V DC
+              </text>
+              <text x="270" y="276" font-family="JetBrains Mono, monospace" font-size="12" font-weight="700" fill="#0F172A" text-anchor="middle">
+                TANQUE REATOR CRISTALINO
+              </text>
+              <text x="270" y="294" font-family="JetBrains Mono, monospace" font-size="11" fill="#0284C7" text-anchor="middle">
+                Altura: 8,0 cm • Sem chicanas • Pás 1,5 × 1 cm
+              </text>
+
+              <!-- COMPONENT 4: BOTTOM DRAIN OUTLET (Right of Reactor: 6cm lateral clearance) -->
+              <rect x="466" y="395" width="16" height="22" fill="#059669" />
+              <path d="M 482 406 L 560 406" fill="none" stroke="#0284C7" stroke-width="6" />
+              <rect x="502" y="392" width="44" height="28" rx="5" fill="#FFFFFF" stroke="#0284C7" stroke-width="2" />
+              <text x="524" y="410" font-family="JetBrains Mono, monospace" font-size="10" font-weight="700" fill="#0284C7" text-anchor="middle">
+                REG. 2
+              </text>
+              <text x="545" y="438" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#0F172A" text-anchor="middle">
+                Saída 6–8 mm
+              </text>
+              <text x="545" y="453" font-family="JetBrains Mono, monospace" font-size="10" fill="#0284C7" text-anchor="middle">
+                ↓ Queda 75 cm
+              </text>
+
+              <!-- Interactive Numbered Hotspots (1 to 4) -->
+              <g class="cursor-pointer" onclick="selectCadHotspot(1)">
+                <circle cx="96" cy="96" r="15" fill="#0284C7" stroke="#FFFFFF" stroke-width="2.5" />
+                <text x="96" y="101" font-family="JetBrains Mono, monospace" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">1</text>
+              </g>
+              <g class="cursor-pointer" onclick="selectCadHotspot(2)">
+                <circle cx="335" cy="340" r="15" fill="#0284C7" stroke="#FFFFFF" stroke-width="2.5" />
+                <text x="335" y="345" font-family="JetBrains Mono, monospace" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">2</text>
+              </g>
+              <g class="cursor-pointer" onclick="selectCadHotspot(3)">
+                <circle cx="515" cy="92" r="15" fill="#059669" stroke="#FFFFFF" stroke-width="2.5" />
+                <text x="515" y="97" font-family="JetBrains Mono, monospace" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">3</text>
+              </g>
+              <g class="cursor-pointer" onclick="selectCadHotspot(4)">
+                <circle cx="585" cy="406" r="15" fill="#059669" stroke="#FFFFFF" stroke-width="2.5" />
+                <text x="585" y="411" font-family="JetBrains Mono, monospace" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">4</text>
+              </g>
+
+              <!-- Scale Legend -->
+              <text x="615" y="502" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#475569" text-anchor="end">
+                MALHA: 1 QUADRADO = 1,0 cm × 1,0 cm • FRENTE DA BANCADA (20 cm)
+              </text>
+            </svg>
+          </div>
+
+          <!-- VIEW 2: SIDE ELEVATION & SIPHON CUTAWAY -->
+          <div id="cadSideContainer" class="hidden w-full overflow-x-auto rounded-xl border border-slate-300 bg-[#F8FAFC] p-2">
+            <svg viewBox="0 0 680 530" class="w-full min-w-[540px] h-auto block select-none">
+              <rect x="10" y="10" width="660" height="510" fill="url(#grid1cm)" stroke="#94A3B8" stroke-width="1" />
+
+              <!-- Benchtop Plane Z = 0.0 cm (Y = 310) -->
+              <rect x="30" y="310" width="620" height="14" fill="#334155" />
+              <text x="40" y="303" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#0F172A">
+                NÍVEL DA BANCADA (COTA Z = 0,0 cm)
+              </text>
+
+              <!-- Elevated Tank Z = +18 to +25 cm -->
+              <rect x="75" y="60" width="120" height="80" rx="4" fill="#FEF3C7" stroke="#0F172A" stroke-width="2" />
+              <rect x="88" y="140" width="10" height="170" fill="#64748B" />
+              <rect x="172" y="140" width="10" height="170" fill="#64748B" />
+              <line x1="52" y1="140" x2="52" y2="310" stroke="#0284C7" stroke-width="1.8" />
+              <text x="44" y="225" transform="rotate(-90 44 225)" font-family="JetBrains Mono, monospace" font-size="11.5" font-weight="700" fill="#0284C7" text-anchor="middle">
+                Z = +18 a +25 cm
+              </text>
+              <text x="135" y="104" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#78350F" text-anchor="middle">
+                EFLUENTE I₂
+              </text>
+
+              <!-- 4mm Hose over rim -->
+              <path d="M 135 140 L 135 175 L 245 175 L 245 215" fill="none" stroke="#0284C7" stroke-width="3.5" />
+              <text x="190" y="168" font-family="JetBrains Mono, monospace" font-size="10" font-weight="700" fill="#0284C7" text-anchor="middle">
+                Tubo 4mm + Reg. 1
+              </text>
+
+              <!-- Reactor Tank H = 8.0 cm (Y=210 to 310) -->
+              <rect x="230" y="210" width="210" height="100" fill="#E0F2FE" fill-opacity="0.75" stroke="#0F172A" stroke-width="2.5" />
+              <!-- Motor 3V & Shaft -->
+              <rect x="315" y="168" width="40" height="32" rx="4" fill="#0F172A" />
+              <rect x="220" y="200" width="230" height="10" fill="#475569" />
+              <line x1="335" y1="200" x2="335" y2="292" stroke="#0F172A" stroke-width="3.5" />
+              <rect x="314" y="286" width="42" height="11" fill="#0284C7" />
+              <text x="335" y="232" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#0F172A" text-anchor="middle">
+                REATOR H = 8,0 cm
+              </text>
+              <text x="335" y="248" font-family="JetBrains Mono, monospace" font-size="10" fill="#0284C7" text-anchor="middle">
+                Pás a 1,5 cm do fundo
+              </text>
+
+              <!-- Serum Stand H = 25.0 cm -->
+              <rect x="575" y="45" width="8" height="265" fill="#475569" />
+              <rect x="515" y="55" width="44" height="75" rx="8" fill="#ECFDF5" stroke="#059669" stroke-width="2" />
+              <path d="M 537 130 L 537 175 L 425 175 L 425 215" fill="none" stroke="#059669" stroke-width="3" stroke-dasharray="4 3" />
+              <line x1="605" y1="45" x2="605" y2="310" stroke="#059669" stroke-width="1.8" />
+              <text x="618" y="180" transform="rotate(-90 618 180)" font-family="JetBrains Mono, monospace" font-size="11.5" font-weight="700" fill="#059669" text-anchor="middle">
+                HASTE Z = +25,0 cm
+              </text>
+
+              <!-- Siphon Drop 75.0 cm below benchtop -->
+              <path d="M 440 302 L 480 302 L 480 430" fill="none" stroke="#0284C7" stroke-width="6" />
+              <line x1="418" y1="324" x2="418" y2="495" stroke="#0284C7" stroke-width="1.8" />
+              <text x="410" y="410" transform="rotate(-90 410 410)" font-family="JetBrains Mono, monospace" font-size="11.5" font-weight="700" fill="#0284C7" text-anchor="middle">
+                QUEDA Z = -75,0 cm
+              </text>
+              <rect x="455" y="425" width="135" height="72" rx="8" fill="#FFFFFF" stroke="#0F172A" stroke-width="2" />
+              <text x="522" y="465" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#0F172A" text-anchor="middle">
+                GALÃO COLETOR 5L
+              </text>
+
+              <!-- Interactive Hotspots -->
+              <g class="cursor-pointer" onclick="selectCadHotspot(1)">
+                <circle cx="135" cy="100" r="15" fill="#0284C7" stroke="#FFFFFF" stroke-width="2.5" />
+                <text x="135" y="105" font-family="JetBrains Mono, monospace" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">1</text>
+              </g>
+              <g class="cursor-pointer" onclick="selectCadHotspot(2)">
+                <circle cx="275" cy="265" r="15" fill="#0284C7" stroke="#FFFFFF" stroke-width="2.5" />
+                <text x="275" y="270" font-family="JetBrains Mono, monospace" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">2</text>
+              </g>
+              <g class="cursor-pointer" onclick="selectCadHotspot(3)">
+                <circle cx="537" cy="92" r="15" fill="#059669" stroke="#FFFFFF" stroke-width="2.5" />
+                <text x="537" y="97" font-family="JetBrains Mono, monospace" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">3</text>
+              </g>
+              <g class="cursor-pointer" onclick="selectCadHotspot(4)">
+                <circle cx="480" cy="365" r="15" fill="#059669" stroke="#FFFFFF" stroke-width="2.5" />
+                <text x="480" y="370" font-family="JetBrains Mono, monospace" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">4</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <!-- RIGHT 4 COLS: TECHNICAL HOTSPOT DETAIL SHEET -->
+        <div class="lg:col-span-4 space-y-4">
+          <!-- Hotspot Selector Pills -->
+          <div class="grid grid-cols-4 gap-2">
+            <button id="hsBtn1" onclick="selectCadHotspot(1)" class="py-2.5 rounded-xl font-mono text-xs font-bold bg-[#0284C7] text-white shadow-sm">
+              [01] Elevado
+            </button>
+            <button id="hsBtn2" onclick="selectCadHotspot(2)" class="py-2.5 rounded-xl font-mono text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50">
+              [02] Reator
+            </button>
+            <button id="hsBtn3" onclick="selectCadHotspot(3)" class="py-2.5 rounded-xl font-mono text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50">
+              [03] Soro
+            </button>
+            <button id="hsBtn4" onclick="selectCadHotspot(4)" class="py-2.5 rounded-xl font-mono text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50">
+              [04] Dreno
+            </button>
+          </div>
+
+          <!-- Dynamic Technical Sheet Card -->
+          <div id="cadDetailCard" class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 4: LISTA DE COMPRAS INTERATIVA & GUIA DE MONTAGEM                 -->
+    <!-- ===================================================================== -->
+    <section id="tab-compras-montagem" class="tab-panel hidden space-y-8">
+      <!-- Shopping Progress Header -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <span class="font-mono text-xs font-bold text-[#059669] uppercase tracking-wider">SUPRIMENTOS &amp; EXECUÇÃO</span>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-[#0F172A]">Lista de Compras Interativa &amp; Guia de Montagem</h2>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2.5">
+            <button onclick="copyShoppingList()" class="px-4 py-2 rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold transition flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+              </svg>
+              Copiar Lista para WhatsApp
+            </button>
+            <button onclick="resetShoppingChecklist()" class="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-600 border border-slate-300 text-xs sm:text-sm font-semibold transition">
+              Limpar Marcações
+            </button>
+          </div>
+        </div>
+
+        <!-- Progress Bar & Category Filters -->
+        <div class="pt-2 space-y-3">
+          <div class="flex items-center justify-between text-xs font-mono">
+            <span class="font-bold text-slate-700">PROGRESSO DE AQUISIÇÃO DO GRUPO</span>
+            <span id="shoppingProgressText" class="font-bold text-[#059669]">0 / 12 itens adquiridos (0%)</span>
+          </div>
+          <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+            <div id="shoppingProgressBar" class="h-full bg-[#059669] transition-all duration-300" style="width: 0%"></div>
+          </div>
+
+          <div class="flex flex-wrap gap-2 pt-2">
+            <button onclick="filterShopping('all')" id="filterAll" class="shop-filter px-3 py-1.5 rounded-lg font-mono text-xs font-bold bg-[#0284C7] text-white">
+              Todos os Locais
+            </button>
+            <button onclick="filterShopping('farmacia')" id="filterFarmacia" class="shop-filter px-3 py-1.5 rounded-lg font-mono text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">
+              Farmácia
+            </button>
+            <button onclick="filterShopping('aquarismo')" id="filterAquarismo" class="shop-filter px-3 py-1.5 rounded-lg font-mono text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">
+              Pet Shop / Aquarismo
+            </button>
+            <button onclick="filterShopping('construcao')" id="filterConstrucao" class="shop-filter px-3 py-1.5 rounded-lg font-mono text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">
+              Papelaria / Eletrônica / Construção
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shopping Checklist Grid -->
+      <div id="shoppingListContainer" class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <!-- Populated dynamically by JavaScript -->
+      </div>
+
+      <!-- Leak-Proof Assembly Step-by-Step Guide -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
+        <div>
+          <span class="font-mono text-xs font-bold text-[#0284C7] uppercase tracking-wider">MANUAL DE CONSTRUÇÃO EM BANCADA</span>
+          <h3 class="text-xl font-extrabold text-[#0F172A]">Passo a Passo de Montagem à Prova de Vazamentos</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          <!-- Step 1 -->
+          <div class="rounded-xl bg-slate-50 border border-slate-200 p-5 space-y-2.5">
+            <span class="inline-block font-mono text-xs font-bold px-2.5 py-1 rounded bg-[#0F172A] text-white">PASSO 01</span>
+            <h4 class="font-bold text-sm text-[#0F172A]">Furação do Acrílico Sem Trincar</h4>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Faça <strong>apenas 1 furo rente ao fundo</strong> do tanque reator (<span class="font-mono">14 × 9 × 8 cm</span>). Use broca escalonada em baixa rotação ou ponta metálica aquecida controlada, finalizando com lixa fina para rebarbas. <strong>Zero furos na entrada!</strong>
+            </p>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="rounded-xl bg-slate-50 border border-slate-200 p-5 space-y-2.5">
+            <span class="inline-block font-mono text-xs font-bold px-2.5 py-1 rounded bg-[#0284C7] text-white">PASSO 02</span>
+            <h4 class="font-bold text-sm text-[#0F172A]">Vedação Dupla do Dreno (6–8 mm)</h4>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Enrole 5 voltas de <strong>fita veda-rosca</strong> no bico/conexão da mangueira cristal de <span class="font-mono">6 a 8 mm (1/4" ou 5/16")</span>, encaixe justo no furo e aplique cordão generoso de <strong>silicone acético</strong> por fora e por dentro. Aguarde cura de 12h.
+            </p>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="rounded-xl bg-slate-50 border border-slate-200 p-5 space-y-2.5">
+            <span class="inline-block font-mono text-xs font-bold px-2.5 py-1 rounded bg-[#059669] text-white">PASSO 03</span>
+            <h4 class="font-bold text-sm text-[#0F172A]">Ponte Seca &amp; Eixo do Motor 3V</h4>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Fixe uma travessa rígida sobre as bordas do reator para manter o <strong>motor DC 3V</strong> (<span class="font-mono">1,5V–3V</span> AA) 100% seco. Conecte o eixo (tubo de carga de caneta) com 2 pás plásticas (<span class="font-mono">1,5 × 1 cm</span>) parando exatamente a <strong>1,5 cm antes do fundo</strong>.
+            </p>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="rounded-xl bg-slate-50 border border-slate-200 p-5 space-y-2.5">
+            <span class="inline-block font-mono text-xs font-bold px-2.5 py-1 rounded bg-[#0F172A] text-white">PASSO 04</span>
+            <h4 class="font-bold text-sm text-[#0F172A]">Alinhamento no Lote 15 × 20 cm</h4>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Fixe o suporte elevado (<span class="font-mono">18–25 cm</span>) e a haste do soro (<span class="font-mono">25 cm</span>) no plano posterior da base <span class="font-mono">20 × 15 cm</span>. Passe a mangueira <span class="font-mono">4 mm</span> e o equipo <strong>por cima da borda</strong> do reator e desça o dreno reto (<span class="font-mono">75 cm</span>) até o galão de <span class="font-mono">5L</span> sob a mesa.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 5: PROTOCOLO DE 4 HORAS & ROTEIRO DE PITCH SINCRONIZADO (90s)     -->
+    <!-- ===================================================================== -->
+    <section id="tab-protocolo-pitch" class="tab-panel hidden space-y-8">
+
+      <!-- CRITICAL RED CHEMICAL RULE ALERT -->
+      <div class="bg-red-50 border-2 border-[#DC2626] rounded-2xl p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center gap-5">
+        <div class="w-12 h-12 rounded-xl bg-[#DC2626] text-white flex items-center justify-center shrink-0 shadow-sm">
+          <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <div class="space-y-1">
+          <span class="font-mono text-xs font-extrabold uppercase tracking-wider text-[#DC2626]">
+            REGRA QUÍMICA CRÍTICA • LEITURA OBRIGATÓRIA PARA TODA A EQUIPE
+          </span>
+          <h3 class="text-lg sm:text-xl font-extrabold text-red-950">
+            Nunca reutilize a água limpa do galão inferior para refazer água com iodo!
+          </h3>
+          <p class="text-sm text-red-900 leading-relaxed">
+            A água drenada no galão de 5L sob a mesa contém <strong>excesso de Ácido Ascórbico (Vitamina C) residual</strong>. Se você tentar dissolver nova Tintura de Iodo 2% nessa água reaproveitada, a Vitamina C residual neutralizará e descolorirá o iodo instantaneamente dentro do reservatório superior, inutilizando a demonstração. Use <strong>sempre água nova limpa</strong> para preparar o efluente escuro.
+          </p>
+        </div>
+      </div>
+
+      <!-- 4-Hour Exhibition Autonomy Calculator -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
+          <div>
+            <span class="font-mono text-xs font-bold text-[#0284C7] uppercase tracking-wider">GESTÃO DE INSUMOS • EXPOSIÇÃO DE 4 HORAS</span>
+            <h3 class="text-xl font-extrabold text-[#0F172A]">Calculadora de Autonomia dos Galões (5L)</h3>
+          </div>
+          <span class="font-mono text-xs font-semibold text-slate-500">Duração Total Evento: 240 minutos</span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          <!-- Sliders / Inputs -->
+          <div class="lg:col-span-6 space-y-4 bg-slate-50 p-5 rounded-xl border border-slate-200">
+            <div>
+              <div class="flex justify-between text-xs font-mono font-bold mb-1.5">
+                <label for="calcStockLiters" class="text-slate-700">RESERVA DE EFLUENTE PREPARADO (LITROS)</label>
+                <span id="calcStockVal" class="text-[#0284C7]">5,0 Litros (1 Galão)</span>
+              </div>
+              <input id="calcStockLiters" type="range" min="5" max="15" step="5" value="5" oninput="updateAutonomyCalc()" class="w-full accent-[#0284C7] cursor-pointer" />
+              <div class="flex justify-between font-mono text-[10px] text-slate-400 mt-1">
+                <span>5L (1 Galão)</span>
+                <span>10L (2 Galões)</span>
+                <span>15L (3 Galões)</span>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex justify-between text-xs font-mono font-bold mb-1.5">
+                <label for="calcCycleMl" class="text-slate-700">VOLUME CONSUMIDO POR CICLO (ML)</label>
+                <span id="calcCycleVal" class="text-[#059669]">380 ml / ciclo</span>
+              </div>
+              <input id="calcCycleMl" type="range" min="350" max="400" step="10" value="380" oninput="updateAutonomyCalc()" class="w-full accent-[#059669] cursor-pointer" />
+              <div class="flex justify-between font-mono text-[10px] text-slate-400 mt-1">
+                <span>350 ml (Mín.)</span>
+                <span>380 ml (Padrão)</span>
+                <span>400 ml (Máx.)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Calculated Output Cards -->
+          <div class="lg:col-span-6 grid grid-cols-3 gap-3 sm:gap-4">
+            <div class="bg-[#0F172A] text-white p-4 rounded-xl text-center">
+              <span class="font-mono text-[10px] uppercase text-slate-400 block">CICLOS COMPLETOS</span>
+              <span id="outTotalCycles" class="font-mono text-2xl sm:text-3xl font-extrabold text-[#059669] block mt-1">13</span>
+              <span class="text-[11px] text-slate-300 block mt-1">demonstrações</span>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center">
+              <span class="font-mono text-[10px] uppercase text-slate-500 block">INTERVALO MÉDIO</span>
+              <span id="outIntervalMin" class="font-mono text-2xl sm:text-3xl font-extrabold text-[#0284C7] block mt-1">18 min</span>
+              <span class="text-[11px] text-slate-500 block mt-1">entre bancas</span>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center">
+              <span class="font-mono text-[10px] uppercase text-slate-500 block">TINTURA IODO 2%</span>
+              <span id="outIodineMl" class="font-mono text-2xl sm:text-3xl font-extrabold text-[#0F172A] block mt-1">15–20 ml</span>
+              <span class="text-[11px] text-slate-500 block mt-1">dosagem total</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SYNCHRONIZED 90-SECOND PITCH TELEPROMPTER -->
+      <div class="bg-[#0F172A] text-white rounded-2xl p-6 sm:p-8 shadow-md border border-slate-800 space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+          <div>
+            <span class="font-mono text-xs font-bold text-[#059669] uppercase tracking-wider">APRESENTAÇÃO AOS AVALIADORES • TELEPROMPTER SINCRONIZADO</span>
+            <h3 class="text-xl sm:text-2xl font-extrabold mt-1">Roteiro de Pitch (90 Segundos) + Operação Manual</h3>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="bg-slate-900 px-4 py-2 rounded-xl border border-slate-700 text-center">
+              <span class="font-mono text-[10px] text-slate-400 block">TEMPO PITCH</span>
+              <span id="pitchClock" class="font-mono text-2xl font-extrabold text-[#38BDF8]">00s</span>
+              <span class="font-mono text-xs text-slate-400">/ 90s</span>
+            </div>
+
+            <button id="btnPitchToggle" onclick="togglePitchTimer()" class="px-5 py-3 rounded-xl bg-[#059669] hover:bg-emerald-600 text-white font-bold text-sm shadow-sm transition flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              </svg>
+              <span id="btnPitchLabel">Iniciar Pitch de 90s</span>
+            </button>
+
+            <button onclick="resetPitchTimer()" class="px-3.5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-sm transition">
+              Zerar
+            </button>
+          </div>
+        </div>
+
+        <!-- Pitch Progress Bar -->
+        <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+          <div id="pitchProgressBar" class="h-full bg-gradient-to-r from-[#0284C7] to-[#059669] transition-all duration-300" style="width: 0%"></div>
+        </div>
+
+        <!-- 4 Synchronized Pitch Phase Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Pitch Stage 1: 0-20s -->
+          <div id="pitchStage0" onclick="jumpPitchTo(0)" class="pitch-card cursor-pointer rounded-xl bg-slate-900 border-2 border-slate-800 p-5 space-y-3 transition-all">
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-xs font-extrabold text-[#38BDF8]">00s – 20s</span>
+              <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-800">FASE 1</span>
+            </div>
+            <div class="bg-sky-950/60 border border-sky-800/60 rounded-lg p-2.5">
+              <span class="font-mono text-[10px] font-bold text-sky-400 block">AÇÃO NOS REGISTROS:</span>
+              <span class="text-xs font-bold text-white">Abrir Registro 1 (4mm) até ~380 ml e fechar.</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed italic">
+              "Esta maquete em escala de 15 por 20 centímetros reproduz a ETE da Midori Auto Leather em Penápolis. Aqui no reservatório elevado temos o efluente bruto escuro descendo por gravidade para o tanque de equalização e reação."
+            </p>
+          </div>
+
+          <!-- Pitch Stage 2: 20-50s -->
+          <div id="pitchStage1" onclick="jumpPitchTo(20)" class="pitch-card cursor-pointer rounded-xl bg-slate-900 border-2 border-slate-800 p-5 space-y-3 transition-all">
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-xs font-extrabold text-[#38BDF8]">20s – 50s</span>
+              <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-800">FASE 2</span>
+            </div>
+            <div class="bg-sky-950/60 border border-sky-800/60 rounded-lg p-2.5">
+              <span class="font-mono text-[10px] font-bold text-sky-400 block">AÇÃO NOS REGISTROS:</span>
+              <span class="text-xs font-bold text-white">Ligar Motor DC (3V) + Abrir Pinça Rolete.</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed italic">
+              "Acionamos nosso agitador motorizado de 3 Volts na ponte seca superior para garantir mistura rápida sem respingos, enquanto dosamos por gotejamento a solução redutora do frasco de 250 ml."
+            </p>
+          </div>
+
+          <!-- Pitch Stage 3: 50-75s -->
+          <div id="pitchStage2" onclick="jumpPitchTo(50)" class="pitch-card cursor-pointer rounded-xl bg-slate-900 border-2 border-slate-800 p-5 space-y-3 transition-all">
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-xs font-extrabold text-[#059669]">50s – 75s</span>
+              <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">FASE 3</span>
+            </div>
+            <div class="bg-emerald-950/60 border border-emerald-800/60 rounded-lg p-2.5">
+              <span class="font-mono text-[10px] font-bold text-emerald-400 block">AÇÃO NOS REGISTROS:</span>
+              <span class="text-xs font-bold text-white">Fechar Pinça Rolete + Desligar Motor 3V.</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed italic">
+              "Observem a reação de oxirredução acontecendo no reator cristalino de 14 por 9 por 8 centímetros: o iodo molecular marrom é convertido em íons iodeto totalmente incolores, comprovando a clarificação visual do efluente."
+            </p>
+          </div>
+
+          <!-- Pitch Stage 4: 75-90s -->
+          <div id="pitchStage3" onclick="jumpPitchTo(75)" class="pitch-card cursor-pointer rounded-xl bg-slate-900 border-2 border-slate-800 p-5 space-y-3 transition-all">
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-xs font-extrabold text-[#059669]">75s – 90s</span>
+              <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">FASE 4</span>
+            </div>
+            <div class="bg-emerald-950/60 border border-emerald-800/60 rounded-lg p-2.5">
+              <span class="font-mono text-[10px] font-bold text-emerald-400 block">AÇÃO NOS REGISTROS:</span>
+              <span class="text-xs font-bold text-white">Abrir Registro 2 (6–8mm) → Sifão 75 cm.</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed italic">
+              "Por fim, abrimos o dreno único rente ao fundo. A queda reta de 75 centímetros cria efeito sifão na mangueira de 6 a 8 milímetros e esvazia todo o reator em 10 a 15 segundos para o galão coletor oculto."
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-slate-200 bg-white mt-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-[#059669]"></span>
+        <span class="font-semibold text-[#0F172A]">Maquete Funcional ETE/ETA — Midori Auto Leather</span>
+        <span>• Penápolis/SP</span>
+      </div>
+      <div class="font-mono text-[11px]">
+        Lote: 15×20 cm • Reator: 14×9×8 cm • Ciclo Batelada: 90s (350–400 ml)
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===================================================================== -->
+  <!-- JAVASCRIPT LOGIC: TABS, REAL-TIME HYDRAULIC/REDOX SIMULATOR, CAD, ETC -->
+  <!-- ===================================================================== -->
+  <script>
+    // -------------------------------------------------------------------------
+    // 1. TOAST NOTIFICATION SYSTEM (Safe replacement for alert())
+    // -------------------------------------------------------------------------
+    let toastTimeout = null;
+    function showToast(message, type = 'success') {
+      const banner = document.getElementById('toastBanner');
+      const msgEl = document.getElementById('toastMessage');
+      const iconEl = document.getElementById('toastIcon');
+
+      msgEl.textContent = message;
+      iconEl.className = 'w-2.5 h-2.5 rounded-full shrink-0 ' +
+        (type === 'danger' ? 'bg-[#DC2626]' : type === 'info' ? 'bg-[#0284C7]' : 'bg-[#059669]');
+
+      banner.classList.remove('hidden');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        banner.classList.add('hidden');
+      }, 3400);
+    }
+
+    // -------------------------------------------------------------------------
+    // 2. TAB NAVIGATION
+    // -------------------------------------------------------------------------
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-panel').forEach(panel => {
+        panel.classList.add('hidden');
+      });
+      const target = document.getElementById('tab-' + tabId);
+      if (target) target.classList.remove('hidden');
+
+      document.querySelectorAll('.nav-tab').forEach(btn => {
+        const isTarget = btn.getAttribute('data-tab') === tabId;
+        if (isTarget) {
+          btn.className = 'nav-tab active-tab px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-all bg-[#0F172A] text-white shadow-sm';
+        } else {
+          btn.className = 'nav-tab px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-all text-slate-600 hover:bg-slate-100 hover:text-[#0F172A]';
+        }
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // 3. INTERACTIVE BENCHTOP SIMULATOR (HYDRAULICS + REDOX KINETICS)
+    // -------------------------------------------------------------------------
+    const simState = {
+      valve1: false,       // Registro 1 (4mm raw effluent inlet)
+      motor: false,        // 3V DC Agitator Motor
+      drip: false,         // Pinça Rolete (Vitamin C doser)
+      valve2: false,       // Registro 2 (6-8mm bottom siphon drain)
+      upperVol: 1000,      // ml in elevated tank (max 1000 ml)
+      reactorVol: 0,       // ml in reactor tank (target 380 ml, max 420 ml)
+      iodineConc: 0,       // 0.0 to 1.0 (1.0 = full dark brown I2, 0.0 = 100% crystal clear I-)
+      collectorVol: 0,     // ml collected in bottom 5L gallon
+      autoRunning: false,
+      cycleElapsed: 0,     // seconds (0 to 90s)
+      speedMultiplier: 1,  // 1x (90s) or 3x (30s)
+      bladePhase: 0
+    };
+
+    function setSimSpeed(mult) {
+      simState.speedMultiplier = mult;
+      const btn1 = document.getElementById('speed1xBtn');
+      const btn3 = document.getElementById('speed3xBtn');
+      if (mult === 1) {
+        btn1.className = 'px-2.5 py-1 rounded-lg font-mono text-xs font-bold bg-white text-[#0F172A] shadow-sm transition';
+        btn3.className = 'px-2.5 py-1 rounded-lg font-mono text-xs font-bold text-slate-600 hover:text-[#0F172A] transition';
+      } else {
+        btn3.className = 'px-2.5 py-1 rounded-lg font-mono text-xs font-bold bg-white text-[#0F172A] shadow-sm transition';
+        btn1.className = 'px-2.5 py-1 rounded-lg font-mono text-xs font-bold text-slate-600 hover:text-[#0F172A] transition';
+      }
+    }
+
+    function toggleControl(key) {
+      if (simState.autoRunning) {
+        simState.autoRunning = false;
+        updateAutoButtonUI();
+        showToast('Modo automático interrompido — assumindo controle manual.', 'info');
+      }
+      simState[key] = !simState[key];
+      updateSimControlsUI();
+    }
+
+    function toggleAutoCycle() {
+      if (simState.autoRunning) {
+        simState.autoRunning = false;
+        updateAutoButtonUI();
+        return;
+      }
+      // Prepare clean start if reactor already full or upper tank low
+      if (simState.upperVol < 400) {
+        simState.upperVol = 1000;
+      }
+      simState.reactorVol = 0;
+      simState.iodineConc = 0;
+      simState.cycleElapsed = 0;
+      simState.valve1 = true;
+      simState.motor = false;
+      simState.drip = false;
+      simState.valve2 = false;
+      simState.autoRunning = true;
+
+      updateAutoButtonUI();
+      updateSimControlsUI();
+      showToast('Ciclo automático em batelada (90s) iniciado!', 'success');
+    }
+
+    function updateAutoButtonUI() {
+      const btn = document.getElementById('btnAutoCycle');
+      const txt = document.getElementById('btnAutoCycleText');
+      const badge = document.getElementById('simModeBadge');
+      if (simState.autoRunning) {
+        btn.className = 'px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm shadow-sm transition flex items-center gap-2';
+        txt.textContent = 'Pausar Ciclo Automático';
+        badge.textContent = 'MODO AUTOMÁTICO (90s)';
+        badge.className = 'font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800';
+      } else {
+        btn.className = 'px-4 py-2.5 rounded-xl bg-[#059669] hover:bg-emerald-700 text-white font-semibold text-sm shadow-sm transition flex items-center gap-2';
+        txt.textContent = 'Rodar Ciclo Automático (90s)';
+        badge.textContent = 'MODO MANUAL';
+        badge.className = 'font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700';
+      }
+    }
+
+    function refillUpperTank() {
+      simState.upperVol = 1000;
+      showToast('Reservatório elevado reabastecido com 1000 ml de efluente (Iodo 2%).', 'success');
+    }
+
+    function resetSimulator() {
+      simState.autoRunning = false;
+      simState.valve1 = false;
+      simState.motor = false;
+      simState.drip = false;
+      simState.valve2 = false;
+      simState.upperVol = 1000;
+      simState.reactorVol = 0;
+      simState.iodineConc = 0;
+      simState.collectorVol = 0;
+      simState.cycleElapsed = 0;
+      updateAutoButtonUI();
+      updateSimControlsUI();
+      showToast('Bancada reiniciada para condições iniciais.', 'info');
+    }
+
+    function updateSimControlsUI() {
+      // Valve 1
+      const c1 = document.getElementById('ctrlValve1');
+      const b1 = document.getElementById('badgeValve1');
+      const d1 = document.getElementById('svgValve1Dot');
+      c1.className = simState.valve1
+        ? 'p-3 rounded-xl border-2 border-[#0284C7] bg-sky-50 text-left transition-all shadow-sm'
+        : 'p-3 rounded-xl border-2 border-slate-200 bg-slate-50 hover:border-[#0284C7] text-left transition-all';
+      b1.textContent = simState.valve1 ? 'ABERTO' : 'FECHADO';
+      b1.className = simState.valve1
+        ? 'font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800'
+        : 'font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700';
+      d1.setAttribute('fill', simState.valve1 ? '#059669' : '#DC2626');
+
+      // Motor 3V
+      const cm = document.getElementById('ctrlMotor');
+      const bm = document.getElementById('badgeMotor');
+      cm.className = simState.motor
+        ? 'p-3 rounded-xl border-2 border-[#0284C7] bg-sky-50 text-left transition-all shadow-sm'
+        : 'p-3 rounded-xl border-2 border-slate-200 bg-slate-50 hover:border-[#0284C7] text-left transition-all';
+      bm.textContent = simState.motor ? '3V ATIVO' : 'DESLIGADO';
+      bm.className = simState.motor
+        ? 'font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-sky-200 text-sky-900'
+        : 'font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-200 text-slate-700';
+
+      // Drip
+      const cd = document.getElementById('ctrlDrip');
+      const bd = document.getElementById('badgeDrip');
+      const dd = document.getElementById('svgDripDot');
+      cd.className = simState.drip
+        ? 'p-3 rounded-xl border-2 border-[#059669] bg-emerald-50 text-left transition-all shadow-sm'
+        : 'p-3 rounded-xl border-2 border-slate-200 bg-slate-50 hover:border-[#059669] text-left transition-all';
+      bd.textContent = simState.drip ? 'GOTEJANDO' : 'FECHADA';
+      bd.className = simState.drip
+        ? 'font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800'
+        : 'font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700';
+      dd.setAttribute('fill', simState.drip ? '#059669' : '#DC2626');
+
+      // Valve 2
+      const c2 = document.getElementById('ctrlValve2');
+      const b2 = document.getElementById('badgeValve2');
+      const d2 = document.getElementById('svgValve2Dot');
+      c2.className = simState.valve2
+        ? 'p-3 rounded-xl border-2 border-[#0284C7] bg-sky-50 text-left transition-all shadow-sm'
+        : 'p-3 rounded-xl border-2 border-slate-200 bg-slate-50 hover:border-[#0284C7] text-left transition-all';
+      b2.textContent = simState.valve2 ? 'ABERTO' : 'FECHADO';
+      b2.className = simState.valve2
+        ? 'font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800'
+        : 'font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700';
+      d2.setAttribute('fill', simState.valve2 ? '#059669' : '#DC2626');
+    }
+
+    // Interpolate liquid color between crystal clear (#E0F2FE) and dark iodine brown (#451A03)
+    function getReactorLiquidColor(iodineRatio) {
+      // Crystal clear RGB: (224, 242, 254)
+      // Amber mid RGB:    (180, 83, 9)
+      // Dark brown RGB:   (69, 26, 3)
+      const c = Math.max(0, Math.min(1, iodineRatio));
+      let r, g, b;
+      if (c < 0.45) {
+        const t = c / 0.45;
+        r = Math.round(224 + (180 - 224) * t);
+        g = Math.round(242 + (83 - 242) * t);
+        b = Math.round(254 + (9 - 254) * t);
+      } else {
+        const t = (c - 0.45) / 0.55;
+        r = Math.round(180 + (69 - 180) * t);
+        g = Math.round(83 + (26 - 83) * t);
+        b = Math.round(9 + (3 - 9) * t);
+      }
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    // Simulation Physics & Redox Loop (runs at 20 FPS -> dt = 0.05s)
+    let lastFrameTime = performance.now();
+    function stepSimulation(now) {
+      const rawDt = Math.min(0.1, (now - lastFrameTime) / 1000);
+      lastFrameTime = now;
+      const dt = rawDt * simState.speedMultiplier;
+
+      // Auto 90s Cycle Choreography
+      if (simState.autoRunning) {
+        simState.cycleElapsed += dt;
+        const t = simState.cycleElapsed;
+
+        if (t < 20) {
+          // Phase 1 (0-20s): Open Valve 1 to fill ~380 ml
+          simState.valve1 = simState.reactorVol < 380;
+          simState.motor = false;
+          simState.drip = false;
+          simState.valve2 = false;
+        } else if (t < 58) {
+          // Phase 2 (20-58s): Close Valve 1, Turn ON 3V Motor + Open Vitamin C Drip
+          simState.valve1 = false;
+          simState.motor = true;
+          simState.drip = simState.iodineConc > 0.01;
+          simState.valve2 = false;
+        } else if (t < 75) {
+          // Phase 3 (58-75s): Visual clarity showcase (Crystal water)
+          simState.valve1 = false;
+          simState.drip = false;
+          simState.motor = t < 66;
+          simState.valve2 = false;
+        } else if (t <= 90) {
+          // Phase 4 (75-90s): Open Valve 2 (Siphon 75cm empties in 12s)
+          simState.valve1 = false;
+          simState.motor = false;
+          simState.drip = false;
+          simState.valve2 = true;
+        } else {
+          // Cycle completed
+          simState.cycleElapsed = 90;
+          simState.valve2 = false;
+          simState.autoRunning = false;
+          updateAutoButtonUI();
+          showToast('Ciclo de 90s concluído! Reator drenado e pronto para próxima banca.', 'success');
+        }
+        updateSimControlsUI();
+      } else if (simState.valve1 || simState.motor || simState.drip || simState.valve2) {
+        simState.cycleElapsed = Math.min(90, simState.cycleElapsed + dt);
+      }
+
+      // 1. Inlet Flow (Valve 1: ~22 ml/s through 4mm hose)
+      const isInletFlowing = simState.valve1 && simState.upperVol > 0 && simState.reactorVol < 420;
+      if (isInletFlowing) {
+        const inflow = Math.min(22 * dt, simState.upperVol, 420 - simState.reactorVol);
+        const prevVol = simState.reactorVol;
+        simState.upperVol -= inflow;
+        simState.reactorVol += inflow;
+        // Mix incoming dark iodine (conc = 1.0) with current reactor volume
+        simState.iodineConc = ((prevVol * simState.iodineConc) + (inflow * 1.0)) / simState.reactorVol;
+      }
+
+      // 2. Vitamin C Drip + 3V Agitation Redox Reaction
+      const isDripping = simState.drip;
+      if (isDripping && simState.reactorVol > 10) {
+        // Add tiny volume from drip (~0.6 ml/s)
+        simState.reactorVol = Math.min(420, simState.reactorVol + 0.6 * dt);
+        // Reaction rate is fast with 3V motor stirring, slow without stirring
+        const reactionRate = simState.motor ? 0.048 : 0.012;
+        simState.iodineConc = Math.max(0, simState.iodineConc - reactionRate * dt);
+      }
+
+      // 3. Bottom Siphon Drain (Valve 2: ~34 ml/s through 6-8mm hose with 75cm drop -> empties 380ml in ~11.2s)
+      const isDraining = simState.valve2 && simState.reactorVol > 0;
+      if (isDraining) {
+        const outflow = Math.min(34 * dt, simState.reactorVol);
+        simState.reactorVol -= outflow;
+        simState.collectorVol = Math.min(5000, simState.collectorVol + outflow);
+        if (simState.reactorVol <= 0.5) {
+          simState.reactorVol = 0;
+          simState.iodineConc = 0;
+        }
+      }
+
+      // Update SVG Visuals
+      renderSimulatorSVG(isInletFlowing, isDripping, isDraining, rawDt);
+      requestAnimationFrame(stepSimulation);
+    }
+
+    function renderSimulatorSVG(isInletFlowing, isDripping, isDraining, rawDt) {
+      // Upper Tank Liquid Height (max 84px)
+      const upperRatio = simState.upperVol / 1000;
+      const upperH = Math.max(0, 84 * upperRatio);
+      const upperY = 138 - upperH;
+      const upperEl = document.getElementById('svgUpperLiquid');
+      upperEl.setAttribute('y', upperY.toFixed(1));
+      upperEl.setAttribute('height', upperH.toFixed(1));
+      document.getElementById('svgUpperVolText').textContent = Math.round(simState.upperVol) + ' ml';
+
+      // Inlet Pipe & Stream
+      const pipe1 = document.getElementById('svgPipe1Flow');
+      const stream1 = document.getElementById('svgInletStream');
+      if (isInletFlowing) {
+        pipe1.setAttribute('opacity', '1');
+        pipe1.classList.add('pipe-flow-active');
+        stream1.setAttribute('opacity', '0.9');
+        stream1.classList.add('pipe-flow-active');
+      } else {
+        pipe1.setAttribute('opacity', '0');
+        pipe1.classList.remove('pipe-flow-active');
+        stream1.setAttribute('opacity', '0');
+        stream1.classList.remove('pipe-flow-active');
+      }
+
+      // Vitamin C Drip Pipe & Drops
+      const dripPipe = document.getElementById('svgDripPipeFlow');
+      const dropsGrp = document.getElementById('svgVitaminDrops');
+      if (isDripping) {
+        dripPipe.setAttribute('opacity', '1');
+        dripPipe.classList.add('pipe-flow-active');
+        dropsGrp.setAttribute('opacity', '1');
+      } else {
+        dripPipe.setAttribute('opacity', '0');
+        dripPipe.classList.remove('pipe-flow-active');
+        dropsGrp.setAttribute('opacity', '0');
+      }
+
+      // Reactor Liquid Level & Color
+      const reactorRatio = Math.min(1, simState.reactorVol / 420);
+      const reactorH = 128 * reactorRatio;
+      const reactorY = 348 - reactorH;
+      const reactorEl = document.getElementById('svgReactorLiquid');
+      reactorEl.setAttribute('y', reactorY.toFixed(1));
+      reactorEl.setAttribute('height', reactorH.toFixed(1));
+      reactorEl.setAttribute('fill', getReactorLiquidColor(simState.iodineConc));
+
+      // Impeller Rotation & Vortex Wave
+      const waveEl = document.getElementById('svgVortexWave');
+      if (simState.motor) {
+        simState.bladePhase += rawDt * 11;
+        const scaleX = Math.max(0.25, Math.abs(Math.cos(simState.bladePhase)));
+        const bladeLeft = document.getElementById('svgBladeLeft');
+        const bladeRight = document.getElementById('svgBladeRight');
+        const w = 24 * scaleX;
+        bladeLeft.setAttribute('x', (330 - 2 - w).toFixed(1));
+        bladeLeft.setAttribute('width', w.toFixed(1));
+        bladeRight.setAttribute('x', (330 + 2).toFixed(1));
+        bladeRight.setAttribute('width', w.toFixed(1));
+
+        if (simState.reactorVol > 40) {
+          waveEl.setAttribute('opacity', '1');
+          const dy = Math.sin(simState.bladePhase * 1.4) * 4;
+          waveEl.setAttribute('d', `M 212 ${(reactorY + 2).toFixed(1)} Q 270 ${(reactorY - 5 + dy).toFixed(1)} 330 ${(reactorY + 4 - dy).toFixed(1)} T 448 ${(reactorY + 1).toFixed(1)} L 448 348 L 212 348 Z`);
+        } else {
+          waveEl.setAttribute('opacity', '0');
+        }
+      } else {
+        waveEl.setAttribute('opacity', '0');
+      }
+
+      // Drain Pipe & Collector Gallon
+      const drainFlow = document.getElementById('svgDrainFlow');
+      if (isDraining) {
+        drainFlow.setAttribute('opacity', '1');
+        drainFlow.classList.add('pipe-flow-active');
+        drainFlow.setAttribute('stroke', getReactorLiquidColor(simState.iodineConc));
+      } else {
+        drainFlow.setAttribute('opacity', '0');
+        drainFlow.classList.remove('pipe-flow-active');
+      }
+
+      const collRatio = Math.min(1, simState.collectorVol / 5000);
+      const collH = Math.max(8, 94 * collRatio);
+      const collEl = document.getElementById('svgCollectorLiquid');
+      collEl.setAttribute('y', (516 - collH).toFixed(1));
+      collEl.setAttribute('height', collH.toFixed(1));
+      document.getElementById('svgCollectorVolText').textContent = `Tratado: ${Math.round(simState.collectorVol)} ml`;
+
+      // Update Telemetry Numbers & Labels
+      document.getElementById('teleTimer').textContent = simState.cycleElapsed.toFixed(1).padStart(4, '0') + 's';
+      const volRounded = Math.round(simState.reactorVol);
+      document.getElementById('teleVolume').textContent = volRounded;
+      document.getElementById('barVolume').style.width = `${Math.min(100, (volRounded / 400) * 100)}%`;
+
+      const iodinePct = volRounded > 0 ? Math.round(simState.iodineConc * 100) : 0;
+      const teleIodEl = document.getElementById('teleIodine');
+      teleIodEl.textContent = iodinePct;
+      document.getElementById('barIodine').style.width = `${iodinePct}%`;
+
+      const clarityLabel = document.getElementById('teleClarityLabel');
+      const phaseBadge = document.getElementById('telePhaseBadge');
+      const statusDesc = document.getElementById('teleStatusDesc');
+      const eqProducts = document.getElementById('eqProducts');
+
+      if (volRounded === 0) {
+        teleIodEl.className = 'font-mono text-3xl font-extrabold text-slate-400';
+        clarityLabel.textContent = 'Tanque vazio';
+        phaseBadge.textContent = 'PRONTO PARA BATELADA';
+        phaseBadge.className = 'font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300';
+        eqProducts.className = 'text-slate-400 font-bold';
+      } else if (iodinePct > 65) {
+        teleIodEl.className = 'font-mono text-3xl font-extrabold text-amber-400';
+        clarityLabel.textContent = 'Efluente escuro (I₂)';
+        phaseBadge.textContent = 'FASE 1: EFLUENTE BRUTO';
+        phaseBadge.className = 'font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-700';
+        statusDesc.innerHTML = 'Tanque com efluente escuro simulando corantes do couro. Ligue o <strong>Motor DC (3V)</strong> e abra a <strong>Pinça Rolete</strong> para iniciar a redução.';
+        eqProducts.className = 'text-slate-400 font-bold';
+      } else if (iodinePct > 8) {
+        teleIodEl.className = 'font-mono text-3xl font-extrabold text-sky-400';
+        clarityLabel.textContent = 'Reação Redox em curso';
+        phaseBadge.textContent = 'FASE 2: REDUÇÃO ATIVA';
+        phaseBadge.className = 'font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-700';
+        statusDesc.innerHTML = simState.motor
+          ? 'Mistura rápida 3V ativa! O Ácido Ascórbico está convertendo I₂ marrom em íons iodeto (I⁻) incolores.'
+          : 'Dica: Ligue o <strong>Motor DC (3V)</strong> para acelerar a homogeneização da Vitamina C em todo o tanque!';
+        eqProducts.className = 'text-sky-300 font-bold';
+      } else {
+        teleIodEl.className = 'font-mono text-3xl font-extrabold text-[#059669]';
+        clarityLabel.textContent = '100% Cristalina (2 I⁻)';
+        phaseBadge.textContent = 'FASE 3: CLARIFICADA';
+        phaseBadge.className = 'font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700';
+        statusDesc.innerHTML = 'Clarificação completa alcançada! Abra o <strong>Registro 2 (6–8 mm)</strong> para drenar por gravidade (queda 75 cm) em 10–15s.';
+        eqProducts.className = 'text-emerald-400 font-bold';
+      }
+
+      // Hydraulic Alert if both valves open simultaneously
+      const alertBox = document.getElementById('simHydraulicAlert');
+      if (simState.valve1 && simState.valve2) {
+        alertBox.classList.remove('hidden');
+      } else {
+        alertBox.classList.add('hidden');
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // 4. CAD BLUEPRINT VIEWER & INTERACTIVE HOTSPOTS
+    // -------------------------------------------------------------------------
+    const cadHotspotsData = {
+      1: {
+        tag: 'COMPONENTE 01 • ALIMENTAÇÃO POR GRAVIDADE',
+        title: 'Reservatório Elevado de Efluente Bruto',
+        color: '#0284C7',
+        dims: [
+          ['Cota de Elevação (Z)', '18,0 cm a 25,0 cm acima da base'],
+          ['Capacidade Útil', '500 ml a 1.000 ml (1 L)'],
+          ['Tubulação de Descida', 'Mangueira cristal/silicone Ø 4 mm'],
+          ['Controle de Vazão', 'Mini Registro Plástico (Registro 1)'],
+          ['Entrada no Reator', 'Por cima da borda (0 furos na entrada)']
+        ],
+        tip: 'Mantenha a mangueira de 4 mm presa firmemente na borda superior do tanque reator com um clipe plástico para evitar que escape durante a abertura do Registro 1.'
+      },
+      2: {
+        tag: 'COMPONENTE 02 • MISTURA RÁPIDA MECÂNICA',
+        title: 'Tanque Reator Transparente + Motor 3V',
+        color: '#0284C7',
+        dims: [
+          ['Dimensões Internas', '14,0 cm (C) × 9,0 cm (L) × 8,0 cm (A)'],
+          ['Geometria Interna', '100% cristalino, sem divisórias/chicanas'],
+          ['Acionamento', 'Motor DC 3V (1 ou 2 pilhas AA = 1,5V–3V)'],
+          ['Eixo Prolongador', 'Tubo de carga de caneta até 1,5 cm do fundo'],
+          ['Impulsor (2 Pás)', '2 pás plásticas rígidas de 1,5 cm × 1,0 cm']
+        ],
+        tip: 'Posicione o motor DC 3V sobre uma ponte seca rígida apoiada nas bordas do pote. Usar 1 pilha AA (1,5V) ou 2 pilhas (3V) garante rotação suave sem respingar água para fora.'
+      },
+      3: {
+        tag: 'COMPONENTE 03 • DOSAGEM QUÍMICA (REDOX)',
+        title: 'Dosador de Vitamina C por Gotejamento',
+        color: '#059669',
+        dims: [
+          ['Recipiente', 'Frasco de Soro Fisiológico 250 ml (Ø ~6 cm)'],
+          ['Haste de Suporte', 'Vertical rígida com 25,0 cm de altura'],
+          ['Solução Redutora', '3g Ácido Ascórbico incolor em 500 ml água'],
+          ['Válvula de Controle', 'Equipo hospitalar com pinça rolete'],
+          ['Ponto de Injeção', 'Gotejamento direto por cima da borda']
+        ],
+        tip: 'Deixe a pinça rolete pré-calibrada para gotejamento rápido contínuo e utilize o corta-fluxo superior do equipo para abrir/fechar instantaneamente durante a apresentação.'
+      },
+      4: {
+        tag: 'COMPONENTE 04 • DESCARGA RÁPIDA POR SIFÃO',
+        title: 'Dreno de Fundo por Gravidade (Queda 75 cm)',
+        color: '#059669',
+        dims: [
+          ['Furação Única', '1 furo único rente ao fundo do reator'],
+          ['Mangueira de Dreno', 'Cristal grossa Ø 6 mm a 8 mm (1/4" ou 5/16")'],
+          ['Vedação Estanque', 'Silicone acético + fita veda-rosca'],
+          ['Desnível Gravitacional', 'Queda reta de ~75,0 cm até galão oculto'],
+          ['Tempo de Esvaziamento', '10 a 15 segundos (efeito sifão)']
+        ],
+        tip: 'Evite curvas ou "barrigas" na mangueira de 6–8 mm entre a bancada e o galão coletor de 5L sob a mesa; a queda vertical reta garante o início imediato do efeito sifão.'
+      }
+    };
+
+    function switchCadView(view) {
+      const topEl = document.getElementById('cadTopContainer');
+      const sideEl = document.getElementById('cadSideContainer');
+      const btnTop = document.getElementById('btnCadTop');
+      const btnSide = document.getElementById('btnCadSide');
+      const label = document.getElementById('cadDrawingLabel');
+
+      if (view === 'top') {
+        topEl.classList.remove('hidden');
+        sideEl.classList.add('hidden');
+        btnTop.className = 'px-4 py-2 rounded-lg font-mono text-xs sm:text-sm font-bold bg-[#0F172A] text-white shadow-sm transition';
+        btnSide.className = 'px-4 py-2 rounded-lg font-mono text-xs sm:text-sm font-bold text-slate-600 hover:text-[#0F172A] transition';
+        label.textContent = 'PRANCHA 01: PLANTA BAIXA COTADA — ESCALA 1:1 VIRTUAL (1 QUAD = 1 CM)';
+      } else {
+        topEl.classList.add('hidden');
+        sideEl.classList.remove('hidden');
+        btnSide.className = 'px-4 py-2 rounded-lg font-mono text-xs sm:text-sm font-bold bg-[#0F172A] text-white shadow-sm transition';
+        btnTop.className = 'px-4 py-2 rounded-lg font-mono text-xs sm:text-sm font-bold text-slate-600 hover:text-[#0F172A] transition';
+        label.textContent = 'PRANCHA 02: CORTE LONGITUDINAL & PERFIL HIDRÁULICO (H +25 cm / QUEDA -75 cm)';
+      }
+    }
+
+    function selectCadHotspot(id) {
+      const data = cadHotspotsData[id];
+      if (!data) return;
+
+      for (let i = 1; i <= 4; i++) {
+        const btn = document.getElementById('hsBtn' + i);
+        if (i === id) {
+          btn.className = 'py-2.5 rounded-xl font-mono text-xs font-bold bg-[#0284C7] text-white shadow-sm';
+        } else {
+          btn.className = 'py-2.5 rounded-xl font-mono text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50';
+        }
+      }
+
+      const card = document.getElementById('cadDetailCard');
+      const rowsHtml = data.dims.map(([k, v]) => `
+        <div class="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-slate-100 gap-1">
+          <span class="text-xs text-slate-500 font-medium">${k}</span>
+          <span class="font-mono text-xs font-bold text-[#0F172A] sm:text-right">${v}</span>
+        </div>
+      `).join('');
+
+      card.innerHTML = `
+        <div class="space-y-1">
+          <span class="font-mono text-[11px] font-bold uppercase tracking-wider" style="color: ${data.color}">${data.tag}</span>
+          <h3 class="text-lg font-extrabold text-[#0F172A]">${data.title}</h3>
+        </div>
+        <div class="divide-y divide-slate-100">
+          ${rowsHtml}
+        </div>
+        <div class="bg-sky-50 border border-sky-200 rounded-xl p-3.5 text-xs text-slate-700 leading-relaxed">
+          <strong class="font-mono text-[#0284C7] block mb-1">DICA DE MONTAGEM & VEDAÇÃO:</strong>
+          ${data.tip}
+        </div>
+      `;
+    }
+
+    // -------------------------------------------------------------------------
+    // 5. INTERACTIVE SHOPPING CHECKLIST (WITH LOCALSTORAGE PERSISTENCE)
+    // -------------------------------------------------------------------------
+    const shoppingItems = [
+      { id: 'f1', cat: 'farmacia', catLabel: 'Farmácia', name: 'Tintura de Iodo 2%', spec: '1 frasco (usar 15–20 ml por 5L água)' },
+      { id: 'f2', cat: 'farmacia', catLabel: 'Farmácia', name: 'Frasco de Soro Fisiológico', spec: '250 ml (~6 cm diâmetro)' },
+      { id: 'f3', cat: 'farmacia', catLabel: 'Farmácia', name: 'Equipo de Soro Hospitalar', spec: '1 unid. com pinça rolete' },
+      { id: 'f4', cat: 'farmacia', catLabel: 'Farmácia', name: 'Vitamina C (Ácido Ascórbico)', spec: 'Cápsulas/pó incolor (3g em 500ml)' },
+
+      { id: 'a1', cat: 'aquarismo', catLabel: 'Pet Shop / Aquarismo', name: 'Mangueira Silicone/Cristal Fina', spec: 'Ø 4 mm interno (linha de entrada)' },
+      { id: 'a2', cat: 'aquarismo', catLabel: 'Pet Shop / Aquarismo', name: 'Mini Registro Plástico (Reg. 1)', spec: '1 unid. para mangueira 4 mm' },
+      { id: 'a3', cat: 'aquarismo', catLabel: 'Pet Shop / Aquarismo', name: 'Mangueira Cristal Grossa (Dreno)', spec: 'Ø 6 mm a 8 mm (1/4" ou 5/16") • ~1 m' },
+      { id: 'a4', cat: 'aquarismo', catLabel: 'Pet Shop / Aquarismo', name: 'Registro Rápido de Descarga (Reg. 2)', spec: '1 unid. compatível 6–8 mm' },
+
+      { id: 'c1', cat: 'construcao', catLabel: 'Papelaria / Eletrônica / Construção', name: 'Pote Retangular Cristalino (Reator)', spec: '14 cm (C) × 9 cm (L) × 8 cm (A) sem divisórias' },
+      { id: 'c2', cat: 'construcao', catLabel: 'Papelaria / Eletrônica / Construção', name: 'Motor DC 3V + Suporte Pilhas AA', spec: '1,5V a 3V + eixo caneta + pás 1,5×1 cm' },
+      { id: 'c3', cat: 'construcao', catLabel: 'Papelaria / Eletrônica / Construção', name: 'Silicone Acético + Fita Veda-Rosca', spec: 'Vedação estanque do furo único de fundo' },
+      { id: 'c4', cat: 'construcao', catLabel: 'Papelaria / Eletrônica / Construção', name: 'Base 15×20 cm, Tanque 500ml e Galão 5L', spec: 'Suporte 18–25 cm + Haste 25 cm + Galão oculto' }
+    ];
+
+    let checkedShoppingIds = [];
+    let currentShoppingFilter = 'all';
+
+    try {
+      const saved = localStorage.getItem('midori_ete_shopping');
+      if (saved) checkedShoppingIds = JSON.parse(saved);
+    } catch (e) {
+      checkedShoppingIds = [];
+    }
+
+    function saveShoppingState() {
+      try {
+        localStorage.setItem('midori_ete_shopping', JSON.stringify(checkedShoppingIds));
+      } catch (e) {
+        // Ignore storage restrictions
+      }
+    }
+
+    function toggleShoppingItem(id) {
+      if (checkedShoppingIds.includes(id)) {
+        checkedShoppingIds = checkedShoppingIds.filter(item => item !== id);
+      } else {
+        checkedShoppingIds.push(id);
+      }
+      saveShoppingState();
+      renderShoppingList();
+    }
+
+    function filterShopping(cat) {
+      currentShoppingFilter = cat;
+      document.querySelectorAll('.shop-filter').forEach(btn => {
+        btn.className = 'shop-filter px-3 py-1.5 rounded-lg font-mono text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200';
+      });
+      const activeMap = {
+        all: 'filterAll',
+        farmacia: 'filterFarmacia',
+        aquarismo: 'filterAquarismo',
+        construcao: 'filterConstrucao'
+      };
+      const activeBtn = document.getElementById(activeMap[cat]);
+      if (activeBtn) {
+        activeBtn.className = 'shop-filter px-3 py-1.5 rounded-lg font-mono text-xs font-bold bg-[#0284C7] text-white';
+      }
+      renderShoppingList();
+    }
+
+    function resetShoppingChecklist() {
+      checkedShoppingIds = [];
+      saveShoppingState();
+      renderShoppingList();
+      showToast('Checklist de compras reiniciado.', 'info');
+    }
+
+    function copyShoppingList() {
+      const lines = ['*LISTA DE COMPRAS — MAQUETE ETE MIDORI AUTO LEATHER (15x20 cm)*\n'];
+      const groups = [
+        { key: 'farmacia', title: '1. FARMÁCIA' },
+        { key: 'aquarismo', title: '2. PET SHOP / AQUARISMO' },
+        { key: 'construcao', title: '3. PAPELARIA / ELETRÔNICA / CONSTRUÇÃO' }
+      ];
+      groups.forEach(g => {
+        lines.push(`\n*${g.title}*`);
+        shoppingItems.filter(i => i.cat === g.key).forEach(item => {
+          const mark = checkedShoppingIds.includes(item.id) ? '[OK]' : '[ ]';
+          lines.push(`${mark} ${item.name} — ${item.spec}`);
+        });
+      });
+
+      const textArea = document.createElement('textarea');
+      textArea.value = lines.join('\n');
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-9999px';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        showToast('Lista de compras copiada para a área de transferência!', 'success');
+      } catch (err) {
+        showToast('Não foi possível copiar automaticamente.', 'danger');
+      }
+      document.body.removeChild(textArea);
+    }
+
+    function renderShoppingList() {
+      const container = document.getElementById('shoppingListContainer');
+      const total = shoppingItems.length;
+      const done = checkedShoppingIds.length;
+      const pct = Math.round((done / total) * 100);
+
+      document.getElementById('shoppingProgressText').textContent = `${done} / ${total} itens adquiridos (${pct}%)`;
+      document.getElementById('shoppingProgressBar').style.width = `${pct}%`;
+
+      const categories = [
+        { key: 'farmacia', title: 'Farmácia', badgeColor: 'bg-emerald-100 text-[#059669]' },
+        { key: 'aquarismo', title: 'Pet Shop / Aquarismo', badgeColor: 'bg-sky-100 text-[#0284C7]' },
+        { key: 'construcao', title: 'Papelaria / Eletrônica / Construção', badgeColor: 'bg-slate-200 text-[#0F172A]' }
+      ];
+
+      const visibleCategories = currentShoppingFilter === 'all'
+        ? categories
+        : categories.filter(c => c.key === currentShoppingFilter);
+
+      container.innerHTML = visibleCategories.map(cat => {
+        const items = shoppingItems.filter(i => i.cat === cat.key);
+        const itemsHtml = items.map(item => {
+          const isChecked = checkedShoppingIds.includes(item.id);
+          return `
+            <label onclick="toggleShoppingItem('${item.id}')" class="cursor-pointer flex items-start gap-3 p-3 rounded-xl border transition-all ${isChecked ? 'bg-emerald-50/70 border-emerald-200' : 'bg-slate-50 border-slate-200 hover:border-[#0284C7]'}">
+              <input type="checkbox" ${isChecked ? 'checked' : ''} class="mt-1 w-4 h-4 accent-[#059669] rounded cursor-pointer pointer-events-none" />
+              <div class="space-y-0.5">
+                <p class="text-xs sm:text-sm font-bold ${isChecked ? 'line-through text-slate-400' : 'text-[#0F172A]'}">${item.name}</p>
+                <p class="font-mono text-[11px] ${isChecked ? 'text-slate-400' : 'text-slate-600'}">${item.spec}</p>
+              </div>
+            </label>
+          `;
+        }).join('');
+
+        return `
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h3 class="font-bold text-sm text-[#0F172A]">${cat.title}</h3>
+              <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded ${cat.badgeColor}">${items.length} itens</span>
+            </div>
+            <div class="space-y-2.5">
+              ${itemsHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // -------------------------------------------------------------------------
+    // 6. AUTONOMY CALCULATOR & 90-SECOND SYNCHRONIZED PITCH TELEPROMPTER
+    // -------------------------------------------------------------------------
+    function updateAutonomyCalc() {
+      const liters = parseInt(document.getElementById('calcStockLiters').value, 10);
+      const cycleMl = parseInt(document.getElementById('calcCycleMl').value, 10);
+      const gallons = liters / 5;
+      const totalCycles = Math.floor((liters * 1000) / cycleMl);
+      const intervalMin = Math.floor(240 / totalCycles);
+      const iodineMin = 15 * gallons;
+      const iodineMax = 20 * gallons;
+
+      document.getElementById('calcStockVal').textContent = `${liters},0 Litros (${gallons} ${gallons === 1 ? 'Galão' : 'Galões'})`;
+      document.getElementById('calcCycleVal').textContent = `${cycleMl} ml / ciclo`;
+      document.getElementById('outTotalCycles').textContent = totalCycles;
+      document.getElementById('outIntervalMin').textContent = `${intervalMin} min`;
+      document.getElementById('outIodineMl').textContent = `${iodineMin}–${iodineMax} ml`;
+    }
+
+    let pitchSeconds = 0;
+    let pitchTimerHandle = null;
+
+    function togglePitchTimer() {
+      const btn = document.getElementById('btnPitchToggle');
+      const label = document.getElementById('btnPitchLabel');
+
+      if (pitchTimerHandle) {
+        clearInterval(pitchTimerHandle);
+        pitchTimerHandle = null;
+        btn.className = 'px-5 py-3 rounded-xl bg-[#059669] hover:bg-emerald-600 text-white font-bold text-sm shadow-sm transition flex items-center gap-2';
+        label.textContent = 'Retomar Pitch (90s)';
+      } else {
+        if (pitchSeconds >= 90) pitchSeconds = 0;
+        btn.className = 'px-5 py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm shadow-sm transition flex items-center gap-2';
+        label.textContent = 'Pausar Pitch';
+        updatePitchUI();
+        pitchTimerHandle = setInterval(() => {
+          pitchSeconds += 1;
+          if (pitchSeconds >= 90) {
+            pitchSeconds = 90;
+            clearInterval(pitchTimerHandle);
+            pitchTimerHandle = null;
+            btn.className = 'px-5 py-3 rounded-xl bg-[#059669] hover:bg-emerald-600 text-white font-bold text-sm shadow-sm transition flex items-center gap-2';
+            label.textContent = 'Reiniciar Pitch (90s)';
+            showToast('Pitch de 90 segundos finalizado com sucesso!', 'success');
+          }
+          updatePitchUI();
+        }, 1000);
+      }
+    }
+
+    function resetPitchTimer() {
+      if (pitchTimerHandle) {
+        clearInterval(pitchTimerHandle);
+        pitchTimerHandle = null;
+      }
+      pitchSeconds = 0;
+      const btn = document.getElementById('btnPitchToggle');
+      const label = document.getElementById('btnPitchLabel');
+      btn.className = 'px-5 py-3 rounded-xl bg-[#059669] hover:bg-emerald-600 text-white font-bold text-sm shadow-sm transition flex items-center gap-2';
+      label.textContent = 'Iniciar Pitch de 90s';
+      updatePitchUI();
+    }
+
+    function jumpPitchTo(sec) {
+      pitchSeconds = sec;
+      updatePitchUI();
+    }
+
+    function updatePitchUI() {
+      document.getElementById('pitchClock').textContent = String(pitchSeconds).padStart(2, '0') + 's';
+      document.getElementById('pitchProgressBar').style.width = `${(pitchSeconds / 90) * 100}%`;
+
+      let activeStage = 0;
+      if (pitchSeconds >= 75) activeStage = 3;
+      else if (pitchSeconds >= 50) activeStage = 2;
+      else if (pitchSeconds >= 20) activeStage = 1;
+      else activeStage = 0;
+
+      for (let i = 0; i < 4; i++) {
+        const card = document.getElementById('pitchStage' + i);
+        if (i === activeStage && pitchSeconds > 0) {
+          card.className = 'pitch-card cursor-pointer rounded-xl bg-slate-800/95 border-2 border-[#059669] p-5 space-y-3 transition-all shadow-lg scale-[1.01]';
+        } else {
+          card.className = 'pitch-card cursor-pointer rounded-xl bg-slate-900 border-2 border-slate-800 p-5 space-y-3 transition-all opacity-85 hover:opacity-100';
+        }
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // INITIALIZE APPLICATION ON WINDOW LOAD
+    // -------------------------------------------------------------------------
+    window.addEventListener('DOMContentLoaded', () => {
+      selectCadHotspot(1);
+      renderShoppingList();
+      updateAutonomyCalc();
+      updateSimControlsUI();
+      requestAnimationFrame(stepSimulation);
+    });
+  </script>
+</body>
+</html>
